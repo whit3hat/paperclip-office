@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
+import { canvasFonts } from "./canvasFont.js";
 
 export const PLAQUE_OPEN_EVENT = "office:wall-of-fame";
 const PLAQUE_TILES = 3;
@@ -50,7 +51,7 @@ export function findPlaqueTile(map: SceneMap, width = PLAQUE_TILES, avoid: { x: 
 }
 
 function label(text: string, size: number, color: number): Text {
-  const t = new Text({ text, style: { fontFamily: "monospace", fontSize: size, fill: color, fontWeight: "bold" } });
+  const t = new Text({ text, style: { fontFamily: canvasFonts().ui, fontSize: size, fill: color, fontWeight: "bold" } });
   t.resolution = TEXT_RESOLUTION;
   t.anchor.set(0.5, 0);
   return t;

@@ -5,6 +5,8 @@ import { attireCast } from "../shared/roleAttire.js";
 import { useStore } from "../adapters/store.js";
 import { deskVisitOrder } from "../layout/seatAssignment.js";
 import { getEntranceTile, getSceneTileSize, getSeatAssignments, findWalkPath } from "./seatMap.js";
+import { canvasFonts } from "./canvasFont.js";
+import { INK_HEX } from "./stateColors.js";
 import type { Tile } from "../layout/seatAssignment.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
@@ -61,13 +63,13 @@ export function mountPa(world: Container): void {
     body.addChild(sprite.container);
   });
 
-  const name = new Text({ text: NAME, style: { fontFamily: "monospace", fontSize: 10, fill: 0xffd166, fontWeight: "bold", stroke: { color: 0x111111, width: 3 } } });
+  const name = new Text({ text: NAME, style: { fontFamily: canvasFonts().ui, fontSize: 10, fill: 0xffd166, fontWeight: "bold", stroke: { color: INK_HEX, width: 10 / 6, alpha: 0.85 } } });
   name.resolution = 5;
   name.anchor.set(0.5, 0);
 
   const bubble = new Container();
   const bubbleBg = new Graphics();
-  const bubbleText = new Text({ text: "", style: { fontFamily: "monospace", fontSize: 10, fill: 0x2a2a2a, fontWeight: "bold" } });
+  const bubbleText = new Text({ text: "", style: { fontFamily: canvasFonts().ui, fontSize: 10, fill: 0x2a2a2a, fontWeight: "bold" } });
   bubbleText.resolution = 5;
   bubbleText.anchor.set(0.5, 0.5);
   bubble.addChild(bubbleBg, bubbleText);

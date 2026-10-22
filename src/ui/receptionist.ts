@@ -3,6 +3,7 @@ import { CharacterSprite } from "../../vendor/munder-difflin/src/renderer/src/sc
 import { loadTheme } from "../overrides/themeLoader.js";
 import { useStore } from "../adapters/store.js";
 import { getSceneTileSize, getSpawnTile } from "./seatMap.js";
+import { canvasFonts } from "./canvasFont.js";
 
 const GREETING = "Welcome in! Who are you here to see?";
 
@@ -30,7 +31,7 @@ export function mountReceptionist(world: Container): void {
 
   const bubble = new Container();
   const bg = new Graphics();
-  const text = new Text({ text: GREETING, style: { fontFamily: "monospace", fontSize: 10, fill: 0x2a2a2a, fontWeight: "bold" } });
+  const text = new Text({ text: GREETING, style: { fontFamily: canvasFonts().ui, fontSize: 10, fill: 0x2a2a2a, fontWeight: "bold" } });
   text.resolution = 5;
   text.anchor.set(0.5, 0.5);
   const w = text.width + 14;

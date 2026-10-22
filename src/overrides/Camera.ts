@@ -2,6 +2,7 @@
 // and turns the select nudge into a zoom on the agent.
 import { mountPlaque } from "../ui/wallPlaque.js";
 import { mountHeatmap } from "../ui/heatmapLayer.js";
+import { mountDeskState } from "../ui/deskStateLayer.js";
 import { mountAgentLabels } from "../ui/agentLabels.js";
 import { mountPa } from "../ui/paCharacter.js";
 import { mountReceptionist } from "../ui/receptionist.js";
@@ -38,6 +39,7 @@ export class Camera extends UpstreamCamera {
     super(...args);
     active = this;
     mountHeatmap(args[0]);
+    mountDeskState(args[0]);
     mountPlaque(args[0]);
     mountAgentLabels(args[0]);
     mountPa(args[0]);
