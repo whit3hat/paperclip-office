@@ -14,7 +14,8 @@ const NAME_PX = 10;
 const TAG_PX = 9;
 const TAG_GAP = 3;
 /** Screen px between staggered nameplate rows. */
-const ROW_HEIGHT = NAME_PX + 3;
+export const LABEL_ROW_HEIGHT = NAME_PX + 3;
+const ROW_HEIGHT = LABEL_ROW_HEIGHT;
 
 /** Anything with the two Character methods this layer needs; the real type is upstream's class. */
 interface LiveCharacter {
@@ -30,6 +31,26 @@ export function registerCharacter(agentId: string, character: LiveCharacter): vo
 
 export function unregisterCharacter(agentId: string): void {
   live.delete(agentId);
+}
+
+/** A plate drawn by someone other than this layer (the PA) that still has to take its turn in the
+ *  overlap pass — the published close-up shows the PA's plate printed over Oliver's as "PAlliver". */
+export interface ExtraLabel {
+  id: string;
+  rank: number;
+  /** The sprite's world position and the plate's width in text pixels, or null while it is hidden. */
+  measure(): { x: number; y: number; w: number } | null;
+  place(slot: { row: number; visible: boolean }): void;
+}
+
+const extras = new Map<string, ExtraLabel>();
+
+export function registerExtraLabel(label: ExtraLabel): void {
+  extras.set(label.id, label);
+}
+
+export function unregisterExtraLabel(id: string): void {
+  extras.delete(id);
 }
 
 let settings: Pick<OfficeSettings, "nameplates" | "issueTags" | "stateRings"> = {
@@ -230,7 +251,19 @@ export function mountAgentLabels(world: Container): void {
         rank: labelRank(status, stuck, Boolean(a.isGod)),
       });
     }
+    const measured = new Map<string, ExtraLabel>();
+    for (const extra of extras.values()) {
+      const m = tooSmall ? null : extra.measure();
+      if (!m) {
+        extra.place({ row: 0, visible: false });
+        continue;
+      }
+      measured.set(extra.id, extra);
+      boxes.push({ id: extra.id, x: m.x * zoom - m.w / 2, y: m.y * zoom, w: m.w, h: NAME_PX, rank: extra.rank });
+    }
+
     const rows = resolveLabelRows(boxes, ROW_HEIGHT);
+    for (const [id, extra] of measured) extra.place(rows.get(id) ?? { row: 0, visible: false });
     for (const a of agents) {
       const slot = slots.get(a.id);
       if (!slot) continue;

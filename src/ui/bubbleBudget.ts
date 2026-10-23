@@ -41,6 +41,13 @@ export interface BubbleHolder {
 }
 
 const holders = new Map<string, BubbleHolder>();
+let yielding: string | null = null;
+
+/** One agent that must stay quiet whatever its rank — the PA is standing at its desk asking it a
+ *  question, and two clouds over one desk is the pile this cap exists to stop. */
+export function setBubbleYield(agentId: string | null): void {
+  yielding = agentId;
+}
 
 export function registerBubbleHolder(agentId: string, holder: BubbleHolder): void {
   holders.set(agentId, holder);
@@ -56,7 +63,7 @@ export function applyBubbleBudget(agents: BubbleCandidate[], zoom: number): void
   const byId = new Map(agents.map((a) => [a.id, a]));
   const wanting: BubbleCandidate[] = [];
   for (const [id, holder] of holders) {
-    if (!holder.wantsBubble()) continue;
+    if (!holder.wantsBubble() || id === yielding) continue;
     wanting.push(byId.get(id) ?? { id });
   }
   const allowed = chooseBubbles(wanting, zoom);

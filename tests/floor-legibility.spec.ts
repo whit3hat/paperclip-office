@@ -1,8 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { deskEmphasis, deskMarks } from "../src/ui/deskMarks.js";
 import { STATE_HEX } from "../src/ui/stateColors.js";
 import { MAX_LABEL_ROWS, resolveLabelRows, type LabelBox } from "../src/ui/labelLayout.js";
-import { BUBBLE_CAP, BUBBLE_CAP_FAR, chooseBubbles } from "../src/ui/bubbleBudget.js";
+import {
+  BUBBLE_CAP,
+  BUBBLE_CAP_FAR,
+  applyBubbleBudget,
+  chooseBubbles,
+  registerBubbleHolder,
+  setBubbleYield,
+  unregisterBubbleHolder,
+} from "../src/ui/bubbleBudget.js";
 
 const seats = new Map([
   ["a", { x: 1, y: 1 }],
@@ -112,5 +120,49 @@ describe("chooseBubbles", () => {
   it("picks the same agents whatever order they arrive in", () => {
     const candidates = many(20, "working");
     expect([...chooseBubbles([...candidates].reverse(), 1)].sort()).toEqual([...chooseBubbles(candidates, 1)].sort());
+  });
+});
+
+describe("applyBubbleBudget", () => {
+  const holders = (ids: string[]) => {
+    const allowed = new Map(ids.map((id) => [id, false]));
+    for (const id of ids) {
+      registerBubbleHolder(id, { wantsBubble: () => true, allowBubble: (on) => allowed.set(id, on) });
+    }
+    return allowed;
+  };
+
+  afterEach(() => {
+    setBubbleYield(null);
+    for (const id of ["a", "b"]) unregisterBubbleHolder(id);
+  });
+
+  it("lets everyone under the cap keep their cloud", () => {
+    const allowed = holders(["a", "b"]);
+    applyBubbleBudget([{ id: "a", status: "working" }, { id: "b", status: "working" }], 1);
+    expect([...allowed]).toEqual([["a", true], ["b", true]]);
+  });
+
+  it("silences the desk the PA is standing at, and only that one", () => {
+    const allowed = holders(["a", "b"]);
+    setBubbleYield("a");
+    applyBubbleBudget([{ id: "a", status: "working" }, { id: "b", status: "working" }], 1);
+    expect([...allowed]).toEqual([["a", false], ["b", true]]);
+  });
+
+  it("silences a stuck agent too — the PA's question is the one bubble over that desk", () => {
+    const allowed = holders(["a", "b"]);
+    setBubbleYield("a");
+    applyBubbleBudget([{ id: "a", status: "working", stuck: true }, { id: "b", status: "idle" }], 1);
+    expect(allowed.get("a")).toBe(false);
+  });
+
+  it("gives the cloud back once the PA walks on", () => {
+    const allowed = holders(["a", "b"]);
+    setBubbleYield("a");
+    applyBubbleBudget([{ id: "a", status: "working" }], 1);
+    setBubbleYield(null);
+    applyBubbleBudget([{ id: "a", status: "working" }], 1);
+    expect(allowed.get("a")).toBe(true);
   });
 });

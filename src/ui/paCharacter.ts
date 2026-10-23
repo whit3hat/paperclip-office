@@ -7,12 +7,18 @@ import { deskVisitOrder } from "../layout/seatAssignment.js";
 import { getEntranceTile, getSceneTileSize, getSeatAssignments, findWalkPath } from "./seatMap.js";
 import { canvasFonts } from "./canvasFont.js";
 import { INK_HEX } from "./stateColors.js";
+import { LABEL_ROW_HEIGHT, registerExtraLabel, unregisterExtraLabel } from "./agentLabels.js";
+import { setBubbleYield } from "./bubbleBudget.js";
 import type { Tile } from "../layout/seatAssignment.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
 const SPEED = 48; // px/sec, matches vendor Character's walk speed
 const VISIT_SECONDS = 3;
 const NAME = "PA";
+/** Where the PA's plate stands in the queue for a spot: it yields to a stuck or blocked agent and
+ *  to the chief, and sorts with everyone else by id. */
+const PA_LABEL_RANK = 2;
+const PA_LABEL_ID = "pa";
 
 let paEnabled = true;
 
@@ -75,6 +81,9 @@ export function mountPa(world: Container): void {
   bubble.addChild(bubbleBg, bubbleText);
 
   layer.addChild(body, name, bubble);
+  // "PA" never changes, so its unscaled width is measured once for the overlap pass.
+  const nameWidth = name.width;
+  let nameSlot = { row: 0, visible: true };
 
   let px = 0;
   let py = 0;
@@ -161,10 +170,14 @@ export function mountPa(world: Container): void {
     }
     const inv = 1 / world.scale.x;
     name.scale.set(inv);
-    name.position.set(0, 4);
+    name.visible = nameSlot.visible;
+    name.position.set(0, (4 + nameSlot.row * LABEL_ROW_HEIGHT) * inv);
     bubble.scale.set(inv);
     bubble.position.set(0, -34);
     bubble.visible = visiting;
+    // The PA's question and the agent's own cloud would sit on the same desk; the agent it is
+    // standing next to holds its thought until the PA moves on.
+    setBubbleYield(visiting ? order[visitIndex] : null);
     if (visiting) {
       const agent = byId.get(order[visitIndex]);
       const msg = agent ? messageFor(agent as { scores?: { flag?: string | null } | null; issueLabel?: string | null }) : "Status update?";
@@ -174,6 +187,19 @@ export function mountPa(world: Container): void {
     }
   };
 
+  registerExtraLabel({
+    id: PA_LABEL_ID,
+    rank: PA_LABEL_RANK,
+    measure: () => (layer.visible && paEnabled ? { x: px, y: py, w: nameWidth } : null),
+    place: (slot) => {
+      nameSlot = slot;
+    },
+  });
+
   Ticker.shared.add(tick);
-  layer.once("destroyed", () => Ticker.shared.remove(tick));
+  layer.once("destroyed", () => {
+    Ticker.shared.remove(tick);
+    unregisterExtraLabel(PA_LABEL_ID);
+    setBubbleYield(null);
+  });
 }
