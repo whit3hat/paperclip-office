@@ -17,6 +17,16 @@ variables matter:
 | `PUPPETEER` | Resolve puppeteer from outside this repo. It is deliberately not a dependency — nothing but this script wants a browser, and a published plugin should not drag one in. |
 | `OUT`       | Write somewhere other than `docs/screenshots`. Use it to eyeball a run before replacing the set. |
 
+`PUPPETEER` must name puppeteer's **ESM entry file**, not its package directory. The script loads
+it with a bare `import()`, and Node resolves `exports` only for a package *specifier* — given a
+path it falls back to plain file resolution, where a directory is `ERR_UNSUPPORTED_DIR_IMPORT`:
+
+```bash
+export PUPPETEER=~/.cache/puppeteer-host/node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js
+```
+
+Pointing at `.../node_modules/puppeteer` fails immediately, before the browser is ever launched.
+
 ## It is slow, and that is expected
 
 With no GPU, Chrome falls back to SwiftShader and renders the floor in software. Pixi clamps

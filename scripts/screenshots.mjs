@@ -4,7 +4,10 @@
 // sprite sheet per character — so each shot waits for the roster to finish appearing (see ready()).
 //
 // Usage: node scripts/screenshots.mjs [name ...]      (no names = the whole set)
-//   PUPPETEER=<path>  resolve puppeteer from outside this repo (it is not a dependency here)
+//   PUPPETEER=<path>  resolve puppeteer from outside this repo (it is not a dependency here).
+//                     Name the ESM entry file, not the package dir: this is a path import, so
+//                     Node skips "exports" and a directory is ERR_UNSUPPORTED_DIR_IMPORT.
+//                     .../node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js
 //   OUT=<dir>         write somewhere other than docs/screenshots
 //
 // It needs a Chrome and the system libraries Chrome links; on a bare box see docs/screenshots.md.
