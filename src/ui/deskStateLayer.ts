@@ -5,13 +5,16 @@ import { deskMarks, type DeskMark } from "./deskMarks.js";
 import { INK_HEX } from "./stateColors.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
-/** Below this the label layer hides itself (agentLabels.ZOOM_HIDE_BELOW), so the desk mark switches
- *  from a ring around the desk to a filled pad: at whole-floor zoom the state IS the desk. */
-const SOLID_BELOW = 0.55;
 const PULSE_SECONDS = 1.4;
 const STATE_ALPHA = 0.44;
 const ALERT_ALPHA_LOW = 0.45;
 const ALERT_ALPHA_HIGH = 0.8;
+/** The pad is wider than the tile it marks, because a seated character stands on that tile and is
+ *  taller than it: a pad the size of the seat is completely hidden by the person sitting on it,
+ *  which is the bug this layer was supposed to fix. The margin is what you actually see from
+ *  across the floor. Seats are never closer than about three tiles, so neighbouring pads do not
+ *  touch at this size. */
+const PAD_TILES = 1.8;
 
 let enabled = true;
 let invalidate: (() => void) | null = null;
@@ -25,23 +28,21 @@ export function setDeskStateSettings(settings: Pick<OfficeSettings, "stateRings"
 }
 
 function drawMark(g: Graphics, m: DeskMark, ts: number, zoom: number, pulse: number): void {
-  const x = m.tx * ts + 1;
-  const y = m.ty * ts + 1;
-  const size = ts - 2;
+  const size = ts * PAD_TILES;
+  // Centred on the seat tile, not aligned to it, so the margin is even on all four sides.
+  const x = m.tx * ts + ts / 2 - size / 2;
+  const y = m.ty * ts + ts / 2 - size / 2;
   // The marks live in the zoomed world, so counter-scale line weights: a 2px ring must still be
   // ~2 screen px when the camera is fitted to the whole floor, or the state vanishes at the one
   // zoom where you most want it.
   const comp = 1 / Math.min(zoom, 1);
   const ink = Math.max(1, comp * 0.8);
   const alert = m.emphasis === "alert";
-  // Stuck always fills, at any zoom, and breathes between two alphas so it stands out from the
-  // steady blocked red next to it.
-  const solid = alert || zoom < SOLID_BELOW;
 
-  if (solid) {
-    const alpha = alert ? ALERT_ALPHA_LOW + (ALERT_ALPHA_HIGH - ALERT_ALPHA_LOW) * pulse : STATE_ALPHA;
-    g.roundRect(x, y, size, size, 3).fill({ color: m.color, alpha });
-  }
+  // Always filled, at every zoom. Stuck breathes between two alphas so it separates from the
+  // steady blocked red next to it.
+  const alpha = alert ? ALERT_ALPHA_LOW + (ALERT_ALPHA_HIGH - ALERT_ALPHA_LOW) * pulse : STATE_ALPHA;
+  g.roundRect(x, y, size, size, 3).fill({ color: m.color, alpha });
   // A dark edge on the outside and the state colour on the inside: the pair survives the pale oak
   // hall and the saturated department floors (gold on pink is the worst case on the free theme).
   g.roundRect(x, y, size, size, 3).stroke({ width: ink, color: INK_HEX, alpha: 0.55 });
