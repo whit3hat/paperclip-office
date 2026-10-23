@@ -50,15 +50,31 @@ export PUPPETEER_EXECUTABLE_PATH=~/.cache/puppeteer/chrome-headless-shell/<versi
 
 `error while loading shared libraries` means the deps are missing. Chrome ships its own list next
 to the binary in `deb.deps`. Unpack those packages into a prefix you own and put it on the
-library path — on Debian trixie that is the `t64` variants of most of the list, plus `libatomic1`,
-which `deb.deps` does not mention:
+library path — on Debian trixie that is the `t64` variants of most of the list:
 
 ```bash
-mkdir -p /tmp/sysroot && cd /tmp/debs
+mkdir -p ~/.cache/sysroot/debs && cd ~/.cache/sysroot/debs
 apt-get download libglib2.0-0t64 libnss3 libatomic1 ...   # see deb.deps
-for d in *.deb; do dpkg -x "$d" /tmp/sysroot; done
-export LD_LIBRARY_PATH=/tmp/sysroot/usr/lib/x86_64-linux-gnu:/tmp/sysroot/lib/x86_64-linux-gnu
+for d in *.deb; do dpkg -x "$d" ~/.cache/sysroot/root; done
+export LD_LIBRARY_PATH=~/.cache/sysroot/root/usr/lib/x86_64-linux-gnu:~/.cache/sysroot/root/lib/x86_64-linux-gnu
 ```
+
+`deb.deps` lists only Chrome's direct dependencies, so the transitive ones surface one at a time
+as you re-run `--version`. Three never appear in that file and all three stop the binary dead:
+
+| Missing       | Why it is not in `deb.deps`                  |
+| ------------- | -------------------------------------------- |
+| `libatomic1`  | pulled in by the toolchain, not by a package |
+| `libavahi-common3`, `libavahi-client3` | transitive through `libcups2` |
+| `libfribidi0` | transitive through `libpango-1.0-0`          |
+
+Resolve the rest the same way: run the binary, read the one library it names, download the package
+that owns it, unpack, repeat. It converges in a handful of rounds.
+
+Stage it somewhere that survives a dead run. `/tmp` is tempting and wrong under Paperclip — the
+run scratch directory is removed when the run ends, so an interrupted screenshot session throws
+away the whole unpacked tree and the next one rebuilds ~70 packages from nothing. A directory
+under `~/.cache` costs the same and keeps it.
 
 **Install fonts too.** With none present Chrome still renders, so the failure is quiet: the
 screenshots come out with the floor intact and the text wrong. That is worthless for the one
@@ -67,9 +83,17 @@ thing this set is for. Unpack `fonts-liberation`, `fonts-dejavu-core`, `fonts-de
 unpacked config:
 
 ```bash
-export FONTCONFIG_PATH=/tmp/sysroot/etc/fonts
-fc-list | wc -l    # not zero
+export FONTCONFIG_PATH=~/.cache/sysroot/root/etc/fonts
 ```
 
-Shoot `widget` first. It is the cheap one — no floor, so it skips the walk-in wait — and it is all
-text, so it tells you immediately whether fonts resolved.
+Unpacking `fontconfig-config` gets you the configuration but not `fc-list`, which lives in the
+`fontconfig` binary package — so the obvious check is usually unavailable. Shoot `widget` instead.
+It is the cheap one — no floor, so it skips the walk-in wait — and it is all text, so it answers
+the question in one shot and in under a minute:
+
+```bash
+OUT=/tmp/shots node scripts/screenshots.mjs widget
+```
+
+Open it. Real glyphs with the state counts legible means fonts resolved; boxes, blanks or
+uniform-width text mean they did not, and nothing else is worth rendering until they do.
