@@ -43,6 +43,18 @@ export class Character extends UpstreamCharacter implements BubbleHolder {
     return this.want !== null;
   }
 
+  /** Where this character's cloud would hang. Feeds the budget's rect pass so two characters
+   *  standing on the same spot — the walk-in, the roamers, the one pacing by the door — do not
+   *  hang two clouds on top of each other. */
+  bubbleAnchor(): { x: number; y: number } | null {
+    const pos = this.getPixelPosition();
+    return pos ? { x: pos.x, y: pos.y } : null;
+  }
+
+  bubbleText(): string {
+    return this.want?.text ?? "";
+  }
+
   /** Driven by src/ui/bubbleBudget.ts: show the pending thought, or step aside for a louder one. */
   allowBubble(on: boolean): void {
     if (on === this.shown) return;

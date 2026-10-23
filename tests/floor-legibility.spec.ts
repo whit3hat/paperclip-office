@@ -144,6 +144,47 @@ describe("chooseBubbles", () => {
     const candidates = many(20, "working");
     expect([...chooseBubbles([...candidates].reverse(), 1)].sort()).toEqual([...chooseBubbles(candidates, 1)].sort());
   });
+
+  // The cap alone left the published whole-floor shot piled: characters bunch by the door and at
+  // the roaming spots, and three clouds on one anchor is a heap however far under the cap it is.
+  describe("the rect pass", () => {
+    const at = (id: string, x: number, y: number) => ({ id, status: "working", x, y, text: "Reviewing PR for OAuth login" });
+
+    it("keeps one cloud when characters stand on the same spot", () => {
+      const chosen = chooseBubbles([at("a", 400, 600), at("b", 402, 601), at("c", 399, 603)], 1);
+      expect(chosen.size).toBe(1);
+    });
+
+    it("lets them all talk once they are spread out", () => {
+      const chosen = chooseBubbles([at("a", 100, 600), at("b", 400, 600), at("c", 700, 600)], 1);
+      expect(chosen.size).toBe(3);
+    });
+
+    it("gives the one cloud to the agent that matters, not the nearest one", () => {
+      const chosen = chooseBubbles(
+        [at("a-working", 400, 600), { ...at("z-stuck", 402, 601), stuck: true }],
+        1,
+      );
+      expect([...chosen]).toEqual(["z-stuck"]);
+    });
+
+    it("needs more clearance zoomed out, because the clouds counter-scale", () => {
+      const spread = [at("a", 300, 600), at("b", 440, 600)];
+      expect(chooseBubbles(spread, 1).size).toBe(2);
+      expect(chooseBubbles(spread, 0.4).size).toBe(1);
+    });
+
+    it("is stable frame to frame: a hidden cloud does not reclaim its spot", () => {
+      // The reason the rect is estimated from the text rather than read off the live bubble. If a
+      // suppressed cloud reported no rect, it would stop losing and flicker back on.
+      const pile = [at("a", 400, 600), at("b", 401, 600)];
+      expect([...chooseBubbles(pile, 1)]).toEqual([...chooseBubbles(pile, 1)]);
+    });
+
+    it("still packs on the cap alone when nobody reports a position", () => {
+      expect(chooseBubbles(many(30, "working"), 1).size).toBe(BUBBLE_CAP);
+    });
+  });
 });
 
 describe("applyBubbleBudget", () => {

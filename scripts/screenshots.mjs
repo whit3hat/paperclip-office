@@ -112,24 +112,33 @@ const server = await serve();
 const base = `http://127.0.0.1:${server.address().port}/`;
 mkdirSync(OUT, { recursive: true });
 
-const browser = await puppeteer.launch({
-  headless: "shell",
-  args: ["--no-sandbox", "--disable-frame-rate-limit", "--disable-gpu-vsync", "--hide-scrollbars"],
-});
+const launch = () =>
+  puppeteer.launch({
+    headless: "shell",
+    args: ["--no-sandbox", "--disable-frame-rate-limit", "--disable-gpu-vsync", "--hide-scrollbars"],
+  });
 
 try {
   for (const name of names) {
     const shot = SHOTS[name];
-    const page = await browser.newPage();
-    await page.setViewport(VIEWPORT);
-    await page.goto(base + shot.query, { waitUntil: "load" });
-    await ready(page);
-    if (shot.prepare) await shot.prepare(page);
-    await page.screenshot({ path: join(OUT, `${name}.png`), clip: shot.clip });
-    console.log(`screenshots: ${name}.png`);
-    await page.close();
+    // A browser per shot, not a page per shot. Closing the page does not give back everything the
+    // last floor took: under SwiftShader the second office shot in a shared browser crawled badly
+    // enough that nobody reached a desk inside the ten-minute budget, and it shot the walk-in heap
+    // it was built to avoid. A fresh process costs a couple of seconds against a five-minute
+    // render, and every shot then gets the same clean box as the first.
+    const browser = await launch();
+    try {
+      const page = await browser.newPage();
+      await page.setViewport(VIEWPORT);
+      await page.goto(base + shot.query, { waitUntil: "load" });
+      const settled = await ready(page);
+      if (shot.prepare) await shot.prepare(page);
+      await page.screenshot({ path: join(OUT, `${name}.png`), clip: shot.clip });
+      console.log(`screenshots: ${name}.png${settled ? "" : "  (NOT SETTLED - do not publish)"}`);
+    } finally {
+      await browser.close();
+    }
   }
 } finally {
-  await browser.close();
   server.close();
 }
