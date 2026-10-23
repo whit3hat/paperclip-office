@@ -17,10 +17,14 @@ const TAG_GAP = 3;
 export const LABEL_ROW_HEIGHT = NAME_PX + 3;
 const ROW_HEIGHT = LABEL_ROW_HEIGHT;
 
-/** Anything with the two Character methods this layer needs; the real type is upstream's class. */
+/** Anything with the two Character methods this layer needs; the real type is upstream's class.
+ *  The rest are optional because only sceneSnapshot() reads them, and the fakes in the tests
+ *  implement just the position. */
 interface LiveCharacter {
   agentId: string;
   getPixelPosition(): { x: number; y: number };
+  getDeskTile?(): { x: number; y: number };
+  getTilePosition?(): { x: number; y: number };
 }
 
 const live = new Map<string, LiveCharacter>();
@@ -31,6 +35,24 @@ export function registerCharacter(agentId: string, character: LiveCharacter): vo
 
 export function unregisterCharacter(agentId: string): void {
   live.delete(agentId);
+}
+
+/** How far through the walk-in the scene is, for the screenshot harness.
+ *
+ *  Every character spawns at the office door and walks to its desk, so a shot taken when the
+ *  roster is merely *full* catches the whole company in a heap by the entrance with its
+ *  nameplates and clouds stacked. `atDesk` climbs as they arrive and then plateaus; that plateau
+ *  is the ready signal. It is deliberately not "everyone is seated" and not "the floor is still":
+ *  neither ever happens, because idle characters roam and one waiting on a human paces.
+ *  See scripts/screenshots.mjs. */
+export function sceneSnapshot(): { total: number; atDesk: number } {
+  let atDesk = 0;
+  for (const c of live.values()) {
+    const at = c.getTilePosition?.();
+    const desk = c.getDeskTile?.();
+    if (at && desk && at.x === desk.x && at.y === desk.y) atDesk++;
+  }
+  return { total: live.size, atDesk };
 }
 
 /** A plate drawn by someone other than this layer (the PA) that still has to take its turn in the
