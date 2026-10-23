@@ -9,14 +9,25 @@
 //                     Node skips "exports" and a directory is ERR_UNSUPPORTED_DIR_IMPORT.
 //                     .../node_modules/puppeteer/lib/esm/puppeteer/puppeteer.js
 //   OUT=<dir>         write somewhere other than docs/screenshots
+//   SHOT_TMPDIR=<dir> where Chrome keeps its profile and scratch (default ~/.cache/…/tmp)
 //
 // It needs a Chrome and the system libraries Chrome links; on a bare box see docs/screenshots.md.
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { mkdirSync } from "node:fs";
+import { homedir } from "node:os";
 import { extname, join, resolve } from "node:path";
 
 const OUT = resolve(process.env.OUT || "docs/screenshots");
+
+// Chrome's profile has to outlive the shell that started the render. puppeteer.launch() with no
+// userDataDir mkdtemps one under TMPDIR, and a Paperclip run's TMPDIR is inside its scratch dir,
+// which is deleted when the run ends. A detached render then wedges mid-set with nowhere to put
+// the next profile: launch hangs, browser.close() hangs, and it sits at 0% CPU forever looking
+// exactly like a slow shot. Keep it somewhere no single run owns.
+const TMPDIR = resolve(process.env.SHOT_TMPDIR || join(homedir(), ".cache", "paperclip-office-shots", "tmp"));
+mkdirSync(TMPDIR, { recursive: true });
+process.env.TMPDIR = TMPDIR;
 const ROOT = resolve("demo/dist");
 const VIEWPORT = { width: 1440, height: 900, deviceScaleFactor: 1 };
 

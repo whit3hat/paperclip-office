@@ -9,13 +9,14 @@ node scripts/screenshots.mjs        # whole set -> docs/screenshots/
 node scripts/screenshots.mjs office # or just the named shots
 ```
 
-The script serves `demo/dist` on a loopback port and drives it with puppeteer. Two environment
+The script serves `demo/dist` on a loopback port and drives it with puppeteer. Three environment
 variables matter:
 
 | Variable    | Why                                                                      |
 | ----------- | ------------------------------------------------------------------------ |
 | `PUPPETEER` | Resolve puppeteer from outside this repo. It is deliberately not a dependency — nothing but this script wants a browser, and a published plugin should not drag one in. |
 | `OUT`       | Write somewhere other than `docs/screenshots`. Use it to eyeball a run before replacing the set. |
+| `SHOT_TMPDIR` | Where Chrome keeps its profile and scratch. Defaults to `~/.cache/paperclip-office-shots/tmp`; see below for why it is not `TMPDIR`. |
 
 `PUPPETEER` must name puppeteer's **ESM entry file**, not its package directory. The script loads
 it with a bare `import()`, and Node resolves `exports` only for a package *specifier* — given a
@@ -85,6 +86,26 @@ Stage it somewhere that survives a dead run. `/tmp` is tempting and wrong under 
 run scratch directory is removed when the run ends, so an interrupted screenshot session throws
 away the whole unpacked tree and the next one rebuilds ~70 packages from nothing. A directory
 under `~/.cache` costs the same and keeps it.
+
+### Chrome's profile must not live in the run scratch either
+
+The same trap, one level down, and it fails far more confusingly. `puppeteer.launch()` with no
+`userDataDir` creates one with `mkdtemp` under `TMPDIR`, and under Paperclip `TMPDIR` *is* the run
+scratch directory. Detach a render so it outlives its run and the next browser launch has nowhere
+to put a profile: the launch hangs, so does the `browser.close()` before it, and the render sits at
+0% CPU indefinitely. There is no error — it looks exactly like a slow office shot, which is the one
+thing this script has taught you to be patient about.
+
+The script therefore ignores an inherited `TMPDIR` and points it at `SHOT_TMPDIR` before launching
+anything. To check a detached render is genuinely independent, read the env of the node process
+rather than the wrapper:
+
+```bash
+tr '\0' '\n' < /proc/$(pgrep -f screenshots.mjs)/environ | grep TMPDIR
+```
+
+It should name the cache directory. If it names `/tmp/paperclip-run-*`, the render dies with the
+run that started it.
 
 **Install fonts too.** With none present Chrome still renders, so the failure is quiet: the
 screenshots come out with the floor intact and the text wrong. That is worthless for the one
