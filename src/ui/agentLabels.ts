@@ -1,7 +1,7 @@
 import { Container, Graphics, Text, Ticker } from "pixi.js";
 import { useStore } from "../adapters/store.js";
 import { applyBubbleBudget } from "./bubbleBudget.js";
-import { resolveLabelRows, type LabelBox } from "./labelLayout.js";
+import { packLabels, type LabelBox } from "./labelLayout.js";
 import { INK_HEX, stateHex } from "./stateColors.js";
 import { canvasFonts } from "./canvasFont.js";
 import type { OfficeSettings } from "../shared/settings.js";
@@ -124,6 +124,10 @@ export function plateText(name: string, role: string): string {
   const full = sameAsName ? name : `${name} · ${role}`;
   return full.length > PLATE_MAX ? `${full.slice(0, PLATE_MAX - 1).trimEnd()}…` : full;
 }
+
+/** Issue tags are packed after every nameplate, keeping their relative order among themselves: an
+ *  unreadable name is worse than an unreadable issue key. Larger than any labelRank. */
+const TAG_RANK_BASE = 10;
 
 /** Stuck and blocked plates claim their spot first, then the chief, then everyone else. */
 export function labelRank(status: string, stuck: boolean, isChief: boolean): number {
@@ -284,8 +288,37 @@ export function mountAgentLabels(world: Container): void {
       boxes.push({ id: extra.id, x: m.x * zoom - m.w / 2, y: m.y * zoom, w: m.w, h: NAME_PX, rank: extra.rank });
     }
 
-    const rows = resolveLabelRows(boxes, ROW_HEIGHT);
+    const { slots: rows, placed } = packLabels(boxes, ROW_HEIGHT);
     for (const [id, extra] of measured) extra.place(rows.get(id) ?? { row: 0, visible: false });
+
+    // Second pass for the issue tags, against the nameplates just placed. A tag hangs off whichever
+    // row its own name landed on, so it cannot be packed until that is settled — and it has to be
+    // packed, because a tag is a plate like any other: left out of the pass, the PA's plate printed
+    // straight through Marcus's issue key and the close-up read "NWR-PA1".
+    const tagBoxes: LabelBox[] = [];
+    const tagBase = new Map<string, number>();
+    for (const a of agents) {
+      const slot = slots.get(a.id);
+      const pos = live.get(a.id)?.getPixelPosition();
+      if (!slot || !pos || tooSmall || !slot.tag.visible) continue;
+      const nameRow = rows.get(a.id);
+      const named = settings.nameplates && Boolean(nameRow?.visible);
+      const dy = 5 + (nameRow?.row ?? 0) * ROW_HEIGHT;
+      const base = named ? dy + NAME_PX + 2 : 5;
+      tagBase.set(a.id, base);
+      const w = slot.tag.width * zoom;
+      tagBoxes.push({
+        id: a.id,
+        x: pos.x * zoom - w / 2,
+        y: pos.y * zoom + base,
+        w,
+        h: TAG_PX,
+        // Tags rank behind every nameplate: a name you cannot read is worse than a key you cannot.
+        rank: TAG_RANK_BASE + labelRank(String(a.status ?? "idle"), Boolean((a as { stuck?: unknown }).stuck), Boolean(a.isGod)),
+      });
+    }
+    const tagRows = packLabels(tagBoxes, ROW_HEIGHT, 1, placed).slots;
+
     for (const a of agents) {
       const slot = slots.get(a.id);
       if (!slot) continue;
@@ -294,7 +327,10 @@ export function mountAgentLabels(world: Container): void {
       slot.name.visible = visible;
       const dy = 5 + (row?.row ?? 0) * ROW_HEIGHT;
       slot.name.position.set(0, dy * textScale);
-      slot.tag.position.set(0, (visible ? dy + NAME_PX + 2 : 5) * textScale);
+      const tagRow = tagRows.get(a.id);
+      if (slot.tag.visible && !tagRow?.visible) slot.tag.visible = false;
+      const base = tagBase.get(a.id) ?? 5;
+      slot.tag.position.set(0, (base + (tagRow?.row ?? 0) * ROW_HEIGHT) * textScale);
     }
 
     for (const [id, slot] of slots) {

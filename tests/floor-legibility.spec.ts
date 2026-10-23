@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { deskEmphasis, deskMarks } from "../src/ui/deskMarks.js";
 import { STATE_HEX } from "../src/ui/stateColors.js";
-import { MAX_LABEL_ROWS, resolveLabelRows, type LabelBox } from "../src/ui/labelLayout.js";
+import { MAX_LABEL_ROWS, packLabels, resolveLabelRows, type LabelBox } from "../src/ui/labelLayout.js";
 import {
   BUBBLE_CAP,
   BUBBLE_CAP_FAR,
@@ -94,6 +94,29 @@ describe("resolveLabelRows", () => {
   it("is the same result whatever order the agents arrive in", () => {
     const boxes = [box("b", 12), box("a", 10), box("c", 14)];
     expect(resolveLabelRows([...boxes].reverse(), 13)).toEqual(resolveLabelRows(boxes, 13));
+  });
+});
+
+describe("packLabels second pass", () => {
+  const box = (id: string, x: number, y: number, rank = 3): LabelBox => ({ id, x, y, w: 30, h: 10, rank });
+
+  it("reports the ground it claimed so a later pass can avoid it", () => {
+    const { slots, placed } = packLabels([box("a", 0, 100)], 13);
+    expect(slots.get("a")).toEqual({ row: 0, visible: true });
+    expect(placed).toEqual([{ x: 0, y: 100, w: 30, h: 10 }]);
+  });
+
+  it("moves an issue tag off a nameplate rather than printing NWR-PA1", () => {
+    // The PA's plate holds the spot the tag would land on; the tag has to step down a row.
+    const { placed } = packLabels([box("pa", 10, 112)], 13);
+    const tags = packLabels([box("marcus-tag", 0, 112)], 13, 1, placed).slots;
+    expect(tags.get("marcus-tag")?.row).toBe(1);
+  });
+
+  it("leaves a tag alone when nothing is in its way", () => {
+    const { placed } = packLabels([box("pa", 500, 112)], 13);
+    const tags = packLabels([box("marcus-tag", 0, 112)], 13, 1, placed).slots;
+    expect(tags.get("marcus-tag")).toEqual({ row: 0, visible: true });
   });
 });
 
