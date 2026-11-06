@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { PREF_KEYS, type Prefs } from "../shared/prefs.js";
 import {
   useHostNavigation,
@@ -18,7 +18,8 @@ import { OfficeScene } from "./OfficeScene.js";
 import { ROSTER_WIDTH, RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
-import { Collapsible } from "./Collapsible.js";
+import { DetailTabs, type DetailTab, type PanelBadge } from "./Panels.js";
+import { fitSceneBox, getFloorAspect, subscribeFloorAspect } from "./sceneFit.js";
 import { WallOfFame } from "./WallOfFame.js";
 import { tokens } from "./tokens.js";
 import { useOffice } from "./useOffice.js";
@@ -185,36 +186,33 @@ function Scoreboard({ agents }: { agents: OfficeAgent[] }) {
       </button>
     </th>
   );
-  const flagged = rows.filter((a) => a.scores!.flag).length;
   return (
-    <Collapsible id="scoreboard" title="Scoreboard" hint={`${rows.length} agents${flagged ? `, ${flagged} flagged` : ""}`}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-        <thead style={{ color: tokens.mutedForeground }}>
-          <tr>
-            <th style={cell}>Agent</th>
-            <th style={cell}>Role</th>
-            {headBtn("productivity", "Productivity")}
-            {headBtn("efficiency", "Efficiency")}
-            <th style={cell}>Flag</th>
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <thead style={{ color: tokens.mutedForeground }}>
+        <tr>
+          <th style={cell}>Agent</th>
+          <th style={cell}>Role</th>
+          {headBtn("productivity", "Productivity")}
+          {headBtn("efficiency", "Efficiency")}
+          <th style={cell}>Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((a) => (
+          <tr
+            key={a.id}
+            onClick={() => useStore.setState({ selectedId: a.id })}
+            style={{ cursor: "pointer", ...(a.scores!.flag ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined) }}
+          >
+            <td style={cell}>{a.name}</td>
+            <td style={{ ...cell, color: tokens.mutedForeground }}>{a.title ?? a.role}</td>
+            <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.productivity} />{a.scores!.productivity}</div></td>
+            <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.efficiency} />{a.scores!.efficiency}</div></td>
+            <td style={{ ...cell, color: tokens.mutedForeground }}>{a.scores!.flag ?? ""}</td>
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((a) => (
-            <tr
-              key={a.id}
-              onClick={() => useStore.setState({ selectedId: a.id })}
-              style={{ cursor: "pointer", ...(a.scores!.flag ? { background: "color-mix(in oklch, var(--destructive) 10%, transparent)" } : undefined) }}
-            >
-              <td style={cell}>{a.name}</td>
-              <td style={{ ...cell, color: tokens.mutedForeground }}>{a.title ?? a.role}</td>
-              <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.productivity} />{a.scores!.productivity}</div></td>
-              <td style={cell}><div style={{ display: "flex", alignItems: "center", gap: 6 }}><Bar value={a.scores!.efficiency} />{a.scores!.efficiency}</div></td>
-              <td style={{ ...cell, color: tokens.mutedForeground }}>{a.scores!.flag ?? ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Collapsible>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -265,6 +263,38 @@ function DecisionsButton({ count }: { count: number }) {
   );
 }
 
+// The scene box: tall enough to be an office, short enough to leave the panel strip in view.
+const SCENE_MIN_HEIGHT = 320;
+const SCENE_MAX_HEIGHT = 720;
+const SCENE_MAX_VH = 0.68;
+
+function usePageWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return width;
+}
+
+function useViewportHeight(): number {
+  const [height, setHeight] = useState(() => (typeof window === "undefined" ? 0 : window.innerHeight));
+  useEffect(() => {
+    const onResize = () => setHeight(window.innerHeight);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return height;
+}
+
+/** Null until a floor has reported its map size. */
+function useFloorAspect(): number | null {
+  return useSyncExternalStore(subscribeFloorAspect, getFloorAspect, () => null);
+}
+
 export function OfficePage({ context }: PluginPageProps) {
   const companyId = context.companyId ?? "";
   const { data: served, error } = useOffice(companyId);
@@ -297,9 +327,59 @@ export function OfficePage({ context }: PluginPageProps) {
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
+  // Give the canvas the floor's own proportions, so upstream's fit-to-screen has no band left to
+  // centre (see sceneFit.ts). Fullscreen keeps the screen's shape: the box is not ours to pick.
+  const pageRef = useRef<HTMLDivElement>(null);
+  const pageWidth = usePageWidth(pageRef);
+  const viewportHeight = useViewportHeight();
+  const floorAspect = useFloorAspect();
+  const sceneBox =
+    full || !floorAspect || pageWidth <= 0
+      ? null
+      : fitSceneBox({
+          available: pageWidth,
+          aspect: floorAspect,
+          gutter: rosterOpen ? ROSTER_WIDTH : 0,
+          minHeight: SCENE_MIN_HEIGHT,
+          maxHeight: Math.min(viewportHeight * SCENE_MAX_VH, SCENE_MAX_HEIGHT),
+        });
+
+  const agents = data?.agents ?? [];
+  const stuck = agents.filter((a) => a.stuck).length;
+  const overBudget = agents.filter((a) => a.overBudget && !a.stuck).length;
+  const flagged = agents.filter((a) => a.scores?.flag).length;
+  const scored = agents.filter((a) => a.scores).length;
+  const stateBadges: PanelBadge[] = stuck
+    ? [{ text: `${stuck} stuck`, tone: "alert" }]
+    : overBudget
+      ? [{ text: `${overBudget} over budget`, tone: "alert" }]
+      : [{ text: `${agents.length} agents` }];
+  const tabs: DetailTab[] = data
+    ? [
+        ...((data.settings.scoreboard ?? true) && scored > 0
+          ? [{
+              id: "scoreboard",
+              title: "Scoreboard",
+              badges: flagged ? [{ text: `${flagged} flagged`, tone: "alert" as const }] : [{ text: `${scored} agents` }],
+              body: () => <Scoreboard agents={data.agents} />,
+            }]
+          : []),
+        ...((data.settings.showOrgPanel ?? true)
+          ? [{ id: "org", title: "Chain of command", badges: [{ text: `${data.agents.length} agents` }], body: () => <OrgPanel data={data} /> }]
+          : []),
+        ...((data.settings.showStateBoard ?? true)
+          ? [{
+              id: "states",
+              title: "Agent states",
+              badges: stateBadges,
+              body: () => <StateBoard agents={data.agents} cost={(data.settings.showCost ?? true) ? data.settings.costMetric ?? "auto" : null} />,
+            }]
+          : []),
+      ]
+    : [];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: 16, color: tokens.foreground }}>
+    <div ref={pageRef} style={{ display: "flex", flexDirection: "column", gap: 16, padding: 16, color: tokens.foreground }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Office</h1>
@@ -313,7 +393,10 @@ export function OfficePage({ context }: PluginPageProps) {
       <div
         ref={sceneRef}
         style={{
-          height: full ? "100vh" : "min(68vh, 720px)",
+          // A floor narrower than the page leaves page background beside it, never empty canvas.
+          alignSelf: "center",
+          width: sceneBox ? sceneBox.width : "100%",
+          height: full ? "100vh" : sceneBox ? sceneBox.height : `min(${SCENE_MAX_VH * 100}vh, ${SCENE_MAX_HEIGHT}px)`,
           borderRadius: full ? 0 : tokens.radius,
           border: full ? "none" : `1px solid ${tokens.border}`,
           overflow: "hidden",
@@ -340,17 +423,8 @@ export function OfficePage({ context }: PluginPageProps) {
       {data && (data.settings.activityFeed ?? true) && (
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
       )}
-      {data && (data.settings.scoreboard ?? true) && <Scoreboard agents={data.agents} />}
-      {data && (data.settings.showOrgPanel ?? true) && (
-        <Collapsible id="org" title="Chain of command" hint={`${data.agents.length} agents`}>
-          <OrgPanel data={data} />
-        </Collapsible>
-      )}
-      {data && (data.settings.showStateBoard ?? true) && (
-        <Collapsible id="states" title="Agent states" hint="state, current issue, time and spend">
-          <StateBoard agents={data.agents} cost={(data.settings.showCost ?? true) ? data.settings.costMetric ?? "auto" : null} />
-        </Collapsible>
-      )}
+      {/* Mounted only once the roster exists: the strip picks its first open tab from the badges. */}
+      {data && <DetailTabs tabs={tabs} />}
     </div>
   );
 }

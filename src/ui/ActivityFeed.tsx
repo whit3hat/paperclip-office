@@ -1,8 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePluginData, useHostNavigation } from "@paperclipai/plugin-sdk/ui";
 import { ACTIVITY_DATA_KEY, type ActivityEvent, type ActivityType } from "../shared/activity.js";
 import { tokens } from "./tokens.js";
 import { useStore } from "../adapters/store.js";
+import { PrimaryPanel, usePanelOpen, type PanelBadge } from "./Panels.js";
+
+const SEEN_KEY = "office.activity.seen";
+
+/** Timestamp of the newest event the viewer has had on screen. Only the feed being open counts as
+ *  having seen it, so a closed feed can report what arrived while it was shut. */
+function readSeen(): string | null {
+  try {
+    return localStorage.getItem(SEEN_KEY);
+  } catch {
+    return null;
+  }
+}
 
 const TYPE_LABEL: Record<ActivityType, string> = {
   run_started: "Run started",
@@ -48,11 +61,24 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 export function ActivityFeed({ companyId, windowHours, limit }: { companyId: string; windowHours: number; limit: number }) {
   const { data } = usePluginData<{ events: ActivityEvent[] }>(ACTIVITY_DATA_KEY, { companyId, limit });
   const nav = useHostNavigation();
-  const [open, setOpen] = useState(false);
+  const [open, toggle] = usePanelOpen("activity", true);
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<ActivityType | null>(null);
 
   const events = data?.events ?? [];
+  const newest = useMemo(() => events.reduce<string | null>((max, e) => (max && max >= e.at ? max : e.at), null), [events]);
+  const [seen, setSeen] = useState(readSeen);
+  useEffect(() => {
+    if (!open || !newest || (seen && seen >= newest)) return;
+    try {
+      localStorage.setItem(SEEN_KEY, newest);
+    } catch {}
+    setSeen(newest);
+  }, [open, newest, seen]);
+  const fresh = seen ? events.filter((e) => e.at > seen).length : 0;
+  // Open, the feed is its own badge; closed, it owes the viewer a count of what it is hiding.
+  const badges: PanelBadge[] =
+    open || fresh === 0 ? [{ text: `${events.length} event${events.length === 1 ? "" : "s"}` }] : [{ text: `${fresh} new`, tone: "new" }];
   const agents = useMemo(() => {
     const names = new Map<string, string>();
     for (const e of events) if (e.agentId && e.agentName) names.set(e.agentId, e.agentName);
@@ -64,87 +90,64 @@ export function ActivityFeed({ companyId, windowHours, limit }: { companyId: str
   );
 
   return (
-    <div style={{ border: `1px solid ${tokens.border}`, borderRadius: tokens.radius, background: tokens.surface }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 14px",
-          background: "transparent",
-          border: "none",
-          color: "inherit",
-          cursor: "pointer",
-          fontSize: 14,
-          fontWeight: 600,
-        }}
-      >
-        <span>
-          Activity <span style={{ color: tokens.mutedForeground, fontWeight: 400 }}>last {windowHours}h</span>
-        </span>
-        <span style={{ color: tokens.mutedForeground }}>{open ? "Hide" : "Show"}</span>
-      </button>
-      {open && (
-        <div style={{ padding: "0 14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <Chip active={agentFilter === null} onClick={() => setAgentFilter(null)}>
-              All agents
+    <PrimaryPanel open={open} toggle={toggle} title="Activity" subtitle={`last ${windowHours}h`} badges={badges}>
+      <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <Chip active={agentFilter === null} onClick={() => setAgentFilter(null)}>
+            All agents
+          </Chip>
+          {agents.map(([id, agentName]) => (
+            <Chip key={id} active={agentFilter === id} onClick={() => setAgentFilter(agentFilter === id ? null : id)}>
+              {agentName}
             </Chip>
-            {agents.map(([id, agentName]) => (
-              <Chip key={id} active={agentFilter === id} onClick={() => setAgentFilter(agentFilter === id ? null : id)}>
-                {agentName}
-              </Chip>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <Chip active={typeFilter === null} onClick={() => setTypeFilter(null)}>
-              All types
-            </Chip>
-            {TYPES.map((t) => (
-              <Chip key={t} active={typeFilter === t} onClick={() => setTypeFilter(typeFilter === t ? null : t)}>
-                {TYPE_LABEL[t]}
-              </Chip>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 320, overflowY: "auto" }}>
-            {filtered.length === 0 && <div style={{ color: tokens.mutedForeground, fontSize: 13, padding: "8px 0" }}>Nothing here yet.</div>}
-            {filtered.map((e) => (
-              <div
-                key={e.id}
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 8,
-                  padding: "6px 4px",
-                  borderBottom: `1px solid ${tokens.border}`,
-                  fontSize: 13,
-                }}
-              >
-                <span style={{ color: tokens.mutedForeground, fontSize: 11, whiteSpace: "nowrap", width: 64 }}>{ago(e.at)}</span>
-                {e.agentId && (
-                  <a
-                    onClick={() => useStore.getState().select(e.agentId!)}
-                    style={{ color: "inherit", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}
-                  >
-                    {e.agentName}
-                  </a>
-                )}
-                <span style={{ color: tokens.mutedForeground }}>
-                  {e.issueId ? (
-                    <a {...nav.linkProps(`/issues/${e.issueLabel}`)} style={{ color: "inherit" }}>
-                      {e.text}
-                    </a>
-                  ) : (
-                    e.text
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
-    </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <Chip active={typeFilter === null} onClick={() => setTypeFilter(null)}>
+            All types
+          </Chip>
+          {TYPES.map((t) => (
+            <Chip key={t} active={typeFilter === t} onClick={() => setTypeFilter(typeFilter === t ? null : t)}>
+              {TYPE_LABEL[t]}
+            </Chip>
+          ))}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 320, overflowY: "auto" }}>
+          {filtered.length === 0 && <div style={{ color: tokens.mutedForeground, fontSize: 13, padding: "8px 0" }}>Nothing here yet.</div>}
+          {filtered.map((e) => (
+            <div
+              key={e.id}
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 8,
+                padding: "6px 4px",
+                borderBottom: `1px solid ${tokens.border}`,
+                fontSize: 13,
+              }}
+            >
+              <span style={{ color: tokens.mutedForeground, fontSize: 11, whiteSpace: "nowrap", width: 64 }}>{ago(e.at)}</span>
+              {e.agentId && (
+                <a
+                  onClick={() => useStore.getState().select(e.agentId!)}
+                  style={{ color: "inherit", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  {e.agentName}
+                </a>
+              )}
+              <span style={{ color: tokens.mutedForeground }}>
+                {e.issueId ? (
+                  <a {...nav.linkProps(`/issues/${e.issueLabel}`)} style={{ color: "inherit" }}>
+                    {e.text}
+                  </a>
+                ) : (
+                  e.text
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PrimaryPanel>
   );
 }

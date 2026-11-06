@@ -105,6 +105,14 @@ const SHOTS = {
       await click(page, "Whole floor");
     },
   },
+  // The small end of the range: three agents make a floor taller than it is wide, which is where
+  // a canvas sized to the page instead of to the floor wasted the most.
+  "office-small": {
+    query: "?team=small",
+    async prepare(page) {
+      await click(page, "Whole floor");
+    },
+  },
   "office-closeup": {
     query: "",
     async prepare(page) {

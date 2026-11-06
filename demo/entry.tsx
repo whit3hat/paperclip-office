@@ -18,6 +18,17 @@ if (layoutParam) {
     OFFICE_DATA.layout.spec = preset.spec;
   }
 }
+// A three-agent company. The generated floor's shape is a function of the roster — a single
+// department is taller than it is wide where six are nearly three times as wide as tall — so the
+// small end needs its own shot to show the canvas still fits the floor it was given.
+if (params.get("team") === "small") {
+  const keep = new Set(["ceo", "eng-lead", "eng-1"]);
+  OFFICE_DATA.agents = OFFICE_DATA.agents.filter((a) => keep.has(a.id));
+  OFFICE_DATA.tasks = OFFICE_DATA.tasks.filter((t) => !!t.assignee && keep.has(t.assignee));
+  OFFICE_DATA.handoffs = OFFICE_DATA.handoffs.filter((h) => keep.has(h.from) && keep.has(h.to));
+  OFFICE_DATA.budgetIncidents = [];
+}
+
 const context = {
   companyId: COMPANY_ID,
   companyPrefix: COMPANY_PREFIX,

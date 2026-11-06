@@ -9,6 +9,7 @@ import { mountReceptionist } from "../ui/receptionist.js";
 import { Camera as UpstreamCamera } from "../../vendor/munder-difflin/src/renderer/src/scene/office/Camera.js";
 import { Container, Graphics, Ticker } from "pixi.js";
 import { getSceneTileSize } from "../ui/seatMap.js";
+import { reportFloorSize } from "../ui/sceneFit.js";
 
 /** Upstream pins its ASK ME board at office.tmj tile (14, 10), which lands mid-room on a generated floor; Decisions covers it. */
 function hideAskBoard(world: Container): void {
@@ -45,6 +46,13 @@ export class Camera extends UpstreamCamera {
     mountPa(args[0]);
     hideAskBoard(args[0]);
     mountReceptionist(args[0]);
+  }
+
+  /** The one place that knows how big the floor actually is; the page sizes its canvas to match,
+   *  so fit-to-screen has no band left to centre. */
+  override setMapSize(width: number, height: number): void {
+    super.setMapSize(width, height);
+    reportFloorSize(width, height);
   }
 
   override nudgeToward(worldX: number, worldY: number): void {
