@@ -124,11 +124,22 @@ const SHOTS = {
   },
   // What the page is below the canvas: the Activity feed leading, the reference tables behind one
   // strip. None of it waits on the walk-in, so this shot skips the five-minute settle.
+  //
+  // Anchor on the Activity header rather than on `scrollHeight`. The strip opens whatever is
+  // flagged, so the foot of the page is the last row of an open reference table — which crops out
+  // both the lead panel and the canvas, the two things the shot exists to compare. Leaving the
+  // canvas's bottom edge in frame is the point: the claim is about what sits *below* it.
   panels: {
     query: "",
     noFloorWait: true,
     async prepare(page) {
-      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.evaluate(() => {
+        const lead = [...document.querySelectorAll("section button")].find((b) =>
+          b.textContent?.trim().startsWith("Activity"),
+        );
+        const top = lead ? lead.getBoundingClientRect().top + window.scrollY : document.body.scrollHeight;
+        window.scrollTo(0, Math.max(0, top - 120));
+      });
       await pause(600);
     },
   },

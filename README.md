@@ -15,7 +15,7 @@ Every agent sits at a desk and shows what it's doing right now. Work flies betwe
 [![Art: Scandi wood](https://img.shields.io/badge/art-Scandi_wood-e9d2a8)](assets/catalogue.json)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-![The office floor for a fictional 16-agent company](docs/screenshots/office.png)
+![The office floor for a fictional 23-agent company](docs/screenshots/office.png)
 
 <sub>All screenshots use a made-up company ("Northwind Robotics") from the built-in demo, drawn in the Scandi wood theme that ships with the plugin. No real data.</sub>
 
