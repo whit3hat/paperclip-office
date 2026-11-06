@@ -93,9 +93,11 @@ async function ready(page, { samples = 8, every = 3000, graceMs = 4000, budgetMs
   return false;
 }
 
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function click(page, label) {
   await page.evaluate((l) => document.querySelector(`[aria-label="${l}"]`)?.click(), label);
-  await new Promise((r) => setTimeout(r, 1200));
+  await pause(1200);
 }
 
 const SHOTS = {
@@ -118,6 +120,16 @@ const SHOTS = {
     async prepare(page) {
       await click(page, "Whole floor");
       for (let i = 0; i < 3; i++) await click(page, "Zoom in");
+    },
+  },
+  // What the page is below the canvas: the Activity feed leading, the reference tables behind one
+  // strip. None of it waits on the walk-in, so this shot skips the five-minute settle.
+  panels: {
+    query: "",
+    noFloorWait: true,
+    async prepare(page) {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await pause(600);
     },
   },
   "agent-monitor": { query: "?agent=eng-4" },
@@ -153,7 +165,7 @@ try {
       const page = await browser.newPage();
       await page.setViewport(VIEWPORT);
       await page.goto(base + shot.query, { waitUntil: "load" });
-      const settled = await ready(page);
+      const settled = shot.noFloorWait ? (await pause(8000), true) : await ready(page);
       if (shot.prepare) await shot.prepare(page);
       await page.screenshot({ path: join(OUT, `${name}.png`), clip: shot.clip });
       console.log(`screenshots: ${name}.png${settled ? "" : "  (NOT SETTLED - do not publish)"}`);
