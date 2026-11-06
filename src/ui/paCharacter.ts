@@ -7,7 +7,7 @@ import { deskVisitOrder } from "../layout/seatAssignment.js";
 import { getEntranceTile, getSceneTileSize, getSeatAssignments, findWalkPath } from "./seatMap.js";
 import { canvasFonts } from "./canvasFont.js";
 import { INK_HEX } from "./stateColors.js";
-import { LABEL_ROW_HEIGHT, registerExtraLabel, unregisterExtraLabel } from "./agentLabels.js";
+import { LABEL_ROW_HEIGHT, LABEL_TOP_OFFSET, registerExtraLabel, unregisterExtraLabel } from "./agentLabels.js";
 import { setBubbleYield } from "./bubbleBudget.js";
 import type { Tile } from "../layout/seatAssignment.js";
 import type { OfficeSettings } from "../shared/settings.js";
@@ -83,7 +83,7 @@ export function mountPa(world: Container): void {
   layer.addChild(body, name, bubble);
   // "PA" never changes, so its unscaled width is measured once for the overlap pass.
   const nameWidth = name.width;
-  let nameSlot = { row: 0, visible: true };
+  let nameSlot = { row: 0, visible: true, dx: 0, dy: 0 };
 
   let px = 0;
   let py = 0;
@@ -171,7 +171,12 @@ export function mountPa(world: Container): void {
     const inv = 1 / world.scale.x;
     name.scale.set(inv);
     name.visible = nameSlot.visible;
-    name.position.set(0, (4 + nameSlot.row * LABEL_ROW_HEIGHT) * inv);
+    // dx/dy are the nudge that kept the plate inside the floor; the PA roams, so it meets the
+    // outer wall more often than anyone seated does.
+    name.position.set(
+      nameSlot.dx * inv,
+      (LABEL_TOP_OFFSET + nameSlot.row * LABEL_ROW_HEIGHT + nameSlot.dy) * inv,
+    );
     bubble.scale.set(inv);
     bubble.position.set(0, -34);
     bubble.visible = visiting;

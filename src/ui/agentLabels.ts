@@ -1,9 +1,10 @@
 import { Container, Graphics, Text, Ticker } from "pixi.js";
 import { useStore } from "../adapters/store.js";
 import { applyBubbleBudget } from "./bubbleBudget.js";
-import { packLabels, type LabelBox } from "./labelLayout.js";
+import { packLabels, type LabelBox, type LabelRect, type LabelSlot } from "./labelLayout.js";
 import { INK_HEX, stateHex } from "./stateColors.js";
 import { canvasFonts } from "./canvasFont.js";
+import { getFloorPixelSize } from "./sceneFit.js";
 import type { OfficeSettings } from "../shared/settings.js";
 
 const TEXT_RESOLUTION = 5;
@@ -13,6 +14,13 @@ const ZOOM_DETAIL = 1.5;
 const NAME_PX = 10;
 const TAG_PX = 9;
 const TAG_GAP = 3;
+/** Screen px below the agent's feet where the first plate row sits. Exported so a plate drawn
+ *  elsewhere (the PA) is measured where it is actually drawn — the clamp against the floor's edge
+ *  is only as honest as the box it is given. */
+export const LABEL_TOP_OFFSET = 5;
+/** Screen px of air kept between a plate and the floor's edge, so a clamped plate reads as placed
+ *  rather than as jammed against the frame. */
+const EDGE_PAD = 2;
 /** Screen px between staggered nameplate rows. */
 export const LABEL_ROW_HEIGHT = NAME_PX + 3;
 const ROW_HEIGHT = LABEL_ROW_HEIGHT;
@@ -62,8 +70,10 @@ export interface ExtraLabel {
   rank: number;
   /** The sprite's world position and the plate's width in text pixels, or null while it is hidden. */
   measure(): { x: number; y: number; w: number } | null;
-  place(slot: { row: number; visible: boolean }): void;
+  place(slot: LabelSlot): void;
 }
+
+const HIDDEN: LabelSlot = { row: 0, visible: false, dx: 0, dy: 0 };
 
 const extras = new Map<string, ExtraLabel>();
 
@@ -260,6 +270,17 @@ export function mountAgentLabels(world: Container): void {
 
     // Deconflict the plates in SCREEN pixels: a plate is counter-scaled to 1/zoom, so its world
     // width times the zoom is exactly its text width in screen pixels.
+    //
+    // The same pass keeps them inside the floor. The canvas now has the floor's exact aspect
+    // (sceneFit.ts), so the map rect is the clip rect at every zoom and a plate on an outer-wall
+    // desk hangs its far half over the edge: at whole-floor zoom the left-most nameplate is about
+    // 30 screen px wide either side of a desk with ~22 px of wall beside it. Clamping belongs here
+    // rather than in the camera fit, because padding the fit would hand the dead band straight back
+    // and the padding would have to grow with MAX_LABEL_ROWS.
+    const floor = getFloorPixelSize();
+    const bounds: LabelRect | undefined = floor
+      ? { x: EDGE_PAD, y: EDGE_PAD, w: floor.width * zoom - EDGE_PAD * 2, h: floor.height * zoom - EDGE_PAD * 2 }
+      : undefined;
     const boxes: LabelBox[] = [];
     for (const a of agents) {
       const slot = slots.get(a.id);
@@ -271,7 +292,9 @@ export function mountAgentLabels(world: Container): void {
       boxes.push({
         id: a.id,
         x: pos.x * zoom - w / 2,
-        y: pos.y * zoom,
+        // The box is where the plate is actually drawn, LABEL_TOP_OFFSET below the feet — it used to sit at
+        // the feet, which cost nothing while every box shared the error and is wrong against a rect.
+        y: pos.y * zoom + LABEL_TOP_OFFSET,
         w,
         h: NAME_PX,
         rank: labelRank(status, stuck, Boolean(a.isGod)),
@@ -281,15 +304,15 @@ export function mountAgentLabels(world: Container): void {
     for (const extra of extras.values()) {
       const m = tooSmall ? null : extra.measure();
       if (!m) {
-        extra.place({ row: 0, visible: false });
+        extra.place(HIDDEN);
         continue;
       }
       measured.set(extra.id, extra);
-      boxes.push({ id: extra.id, x: m.x * zoom - m.w / 2, y: m.y * zoom, w: m.w, h: NAME_PX, rank: extra.rank });
+      boxes.push({ id: extra.id, x: m.x * zoom - m.w / 2, y: m.y * zoom + LABEL_TOP_OFFSET, w: m.w, h: NAME_PX, rank: extra.rank });
     }
 
-    const { slots: rows, placed } = packLabels(boxes, ROW_HEIGHT);
-    for (const [id, extra] of measured) extra.place(rows.get(id) ?? { row: 0, visible: false });
+    const { slots: rows, placed } = packLabels(boxes, ROW_HEIGHT, 1, [], bounds);
+    for (const [id, extra] of measured) extra.place(rows.get(id) ?? HIDDEN);
 
     // Second pass for the issue tags, against the nameplates just placed. A tag hangs off whichever
     // row its own name landed on, so it cannot be packed until that is settled — and it has to be
@@ -303,8 +326,9 @@ export function mountAgentLabels(world: Container): void {
       if (!slot || !pos || tooSmall || !slot.tag.visible) continue;
       const nameRow = rows.get(a.id);
       const named = settings.nameplates && Boolean(nameRow?.visible);
-      const dy = 5 + (nameRow?.row ?? 0) * ROW_HEIGHT;
-      const base = named ? dy + NAME_PX + 2 : 5;
+      // Where the name actually landed, clamp included, so the tag still hangs off its own plate.
+      const dy = LABEL_TOP_OFFSET + (nameRow?.row ?? 0) * ROW_HEIGHT + (nameRow?.dy ?? 0);
+      const base = named ? dy + NAME_PX + 2 : LABEL_TOP_OFFSET;
       tagBase.set(a.id, base);
       const w = slot.tag.width * zoom;
       tagBoxes.push({
@@ -317,7 +341,7 @@ export function mountAgentLabels(world: Container): void {
         rank: TAG_RANK_BASE + labelRank(String(a.status ?? "idle"), Boolean((a as { stuck?: unknown }).stuck), Boolean(a.isGod)),
       });
     }
-    const tagRows = packLabels(tagBoxes, ROW_HEIGHT, 1, placed).slots;
+    const tagRows = packLabels(tagBoxes, ROW_HEIGHT, 1, placed, bounds).slots;
 
     for (const a of agents) {
       const slot = slots.get(a.id);
@@ -325,12 +349,16 @@ export function mountAgentLabels(world: Container): void {
       const row = rows.get(a.id);
       const visible = settings.nameplates && !tooSmall && Boolean(row?.visible);
       slot.name.visible = visible;
-      const dy = 5 + (row?.row ?? 0) * ROW_HEIGHT;
-      slot.name.position.set(0, dy * textScale);
+      const dy = LABEL_TOP_OFFSET + (row?.row ?? 0) * ROW_HEIGHT + (row?.dy ?? 0);
+      // The clamp arrives in screen px, like the boxes; inside the container everything is text px.
+      slot.name.position.set((row?.dx ?? 0) * textScale, dy * textScale);
       const tagRow = tagRows.get(a.id);
       if (slot.tag.visible && !tagRow?.visible) slot.tag.visible = false;
-      const base = tagBase.get(a.id) ?? 5;
-      slot.tag.position.set(0, (base + (tagRow?.row ?? 0) * ROW_HEIGHT) * textScale);
+      const base = tagBase.get(a.id) ?? LABEL_TOP_OFFSET;
+      slot.tag.position.set(
+        (tagRow?.dx ?? 0) * textScale,
+        (base + (tagRow?.row ?? 0) * ROW_HEIGHT + (tagRow?.dy ?? 0)) * textScale,
+      );
     }
 
     for (const [id, slot] of slots) {

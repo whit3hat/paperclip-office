@@ -45,15 +45,24 @@ export function fitSceneBox({ available, aspect, gutter, minHeight, maxHeight }:
 }
 
 let aspect: number | null = null;
+let size: { width: number; height: number } | null = null;
 const listeners = new Set<() => void>();
 
 /** Called by our Camera override once the floor's map exists. */
 export function reportFloorSize(width: number, height: number): void {
   if (!(width > 0) || !(height > 0)) return;
+  size = { width, height };
   const next = width / height;
   if (next === aspect) return;
   aspect = next;
   for (const fn of [...listeners]) fn();
+}
+
+/** The map rect in world pixels, for anything that has to stay inside the floor — the camera never
+ *  shows canvas beyond it, so this is the real clip boundary for the label layer. null until a
+ *  floor has mounted. */
+export function getFloorPixelSize(): { width: number; height: number } | null {
+  return size;
 }
 
 /** null until a floor has mounted: the page keeps its unfitted box, so an error or empty state
@@ -67,7 +76,8 @@ export function subscribeFloorAspect(fn: () => void): () => void {
   return () => void listeners.delete(fn);
 }
 
-/** Tests only: the aspect is module state, and one spec's floor must not leak into the next. */
+/** Tests only: the reported floor is module state, and one spec's floor must not leak into the next. */
 export function resetFloorAspect(): void {
   aspect = null;
+  size = null;
 }

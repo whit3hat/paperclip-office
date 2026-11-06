@@ -61,20 +61,23 @@ describe("deskMarks", () => {
   });
 });
 
+/** A plate that got the row it asked for, with nothing between it and the floor's edge. */
+const unclamped = (row: number) => ({ row, visible: true, dx: 0, dy: 0 });
+
 describe("resolveLabelRows", () => {
   const box = (id: string, x: number, rank = 3): LabelBox => ({ id, x, y: 100, w: 30, h: 10, rank });
 
   it("keeps the row for plates that do not touch", () => {
     const rows = resolveLabelRows([box("a", 0), box("b", 100)], 13);
-    expect(rows.get("a")).toEqual({ row: 0, visible: true });
-    expect(rows.get("b")).toEqual({ row: 0, visible: true });
+    expect(rows.get("a")).toEqual(unclamped(0));
+    expect(rows.get("b")).toEqual(unclamped(0));
   });
 
   it("drops one of two overlapping plates to the next row instead of printing PAlliver", () => {
     const rows = resolveLabelRows([box("pa", 10), box("oliver", 20)], 13);
     // Same priority, so the agent id decides which one holds row 0 — stably, every frame.
-    expect(rows.get("oliver")).toEqual({ row: 0, visible: true });
-    expect(rows.get("pa")).toEqual({ row: 1, visible: true });
+    expect(rows.get("oliver")).toEqual(unclamped(0));
+    expect(rows.get("pa")).toEqual(unclamped(1));
   });
 
   it("suppresses a plate once every row is taken", () => {
@@ -87,7 +90,7 @@ describe("resolveLabelRows", () => {
 
   it("gives the contested spot to the higher-priority plate", () => {
     const rows = resolveLabelRows([box("quiet", 10, 3), box("stuck", 12, 0)], 13);
-    expect(rows.get("stuck")).toEqual({ row: 0, visible: true });
+    expect(rows.get("stuck")).toEqual(unclamped(0));
     expect(rows.get("quiet")?.row).toBe(1);
   });
 
@@ -102,7 +105,7 @@ describe("packLabels second pass", () => {
 
   it("reports the ground it claimed so a later pass can avoid it", () => {
     const { slots, placed } = packLabels([box("a", 0, 100)], 13);
-    expect(slots.get("a")).toEqual({ row: 0, visible: true });
+    expect(slots.get("a")).toEqual(unclamped(0));
     expect(placed).toEqual([{ x: 0, y: 100, w: 30, h: 10 }]);
   });
 
@@ -116,7 +119,71 @@ describe("packLabels second pass", () => {
   it("leaves a tag alone when nothing is in its way", () => {
     const { placed } = packLabels([box("pa", 500, 112)], 13);
     const tags = packLabels([box("marcus-tag", 0, 112)], 13, 1, placed).slots;
-    expect(tags.get("marcus-tag")).toEqual({ row: 0, visible: true });
+    expect(tags.get("marcus-tag")).toEqual(unclamped(0));
+  });
+});
+
+// HAV-90: the canvas has the floor's exact aspect now, so the map rect is the clip rect and a plate
+// centred on an outer-wall desk hangs its far half over the edge. The clamp runs inside the pack
+// pass rather than before it, so a plate pulled inside still competes for its spot.
+describe("packLabels against the floor's edge", () => {
+  const FLOOR = { x: 0, y: 0, w: 400, h: 300 };
+  const box = (id: string, x: number, y = 100, rank = 3, w = 30): LabelBox => ({ id, x, y, w, h: 10, rank });
+
+  it("pulls a plate hanging over the outer wall back inside the floor", () => {
+    const { slots, placed } = packLabels([box("wall-desk", -8)], 13, 1, [], FLOOR);
+    expect(slots.get("wall-desk")).toEqual({ row: 0, visible: true, dx: 8, dy: 0 });
+    expect(placed).toEqual([{ x: 0, y: 100, w: 30, h: 10 }]);
+  });
+
+  it("clamps the right-hand wall the same way", () => {
+    const { slots } = packLabels([box("wall-desk", 380)], 13, 1, [], FLOOR);
+    expect(slots.get("wall-desk")).toEqual({ row: 0, visible: true, dx: -10, dy: 0 });
+  });
+
+  it("makes a clamped plate compete for the spot it was moved into", () => {
+    // Off the edge these two do not touch; pulled inside they do, and the clamped one is the one
+    // that steps down — not whichever happened to be drawn last.
+    const pair = [box("outside", -30), box("stuck", 2, 100, 0)];
+    expect(packLabels(pair, 13).slots.get("outside")).toEqual(unclamped(0));
+    const { slots } = packLabels(pair, 13, 1, [], FLOOR);
+    expect(slots.get("stuck")).toEqual(unclamped(0));
+    expect(slots.get("outside")).toEqual({ row: 1, visible: true, dx: 30, dy: 0 });
+  });
+
+  it("stays deterministic once the clamp is in play", () => {
+    const boxes = [box("b", -12), box("a", -10), box("c", -14)];
+    expect(packLabels([...boxes].reverse(), 13, 1, [], FLOOR).slots).toEqual(packLabels(boxes, 13, 1, [], FLOOR).slots);
+  });
+
+  it("rides the bottom edge instead of stepping off the floor", () => {
+    // The real case: a bottom-wall desk whose nameplate took the spot its issue tag wanted. The
+    // stagger would put the tag below the floor, so it comes back up to the last row that fits.
+    const name = [{ x: 0, y: 278, w: 30, h: 10 }];
+    const { slots } = packLabels([box("tag", 0, 285)], 13, 1, name, FLOOR);
+    expect(slots.get("tag")).toEqual({ row: 1, visible: true, dx: 0, dy: -8 });
+  });
+
+  it("hides a plate with nowhere left rather than printing it half off the canvas", () => {
+    // Every row clamps onto the same strip of bottom wall, which the neighbour already holds. A
+    // plate shaved by the canvas edge is unreadable anyway, so the stable priority decides who
+    // keeps the one spot — the same answer the pass gives for any other full floor.
+    const { slots } = packLabels([box("first", 0, 285, 0), box("second", 10, 285)], 13, 1, [], FLOOR);
+    expect(slots.get("first")).toEqual(unclamped(0));
+    expect(slots.get("second")?.visible).toBe(false);
+  });
+
+  it("never lifts a plate above its own row-0 spot", () => {
+    // A plate hangs below the feet. Climbing onto the agent's head to escape the bottom wall trades
+    // one defect for another, so once row 0 itself does not fit the plate sits flush and stops.
+    const { slots } = packLabels([box("low", 0, 295)], 13, 1, [], FLOOR);
+    expect(slots.get("low")).toEqual(unclamped(0));
+  });
+
+  it("sits a plate too wide for the floor flush with the near edge", () => {
+    const { slots, placed } = packLabels([box("verbose", -50, 100, 3, 500)], 13, 1, [], FLOOR);
+    expect(slots.get("verbose")).toEqual({ row: 0, visible: true, dx: 50, dy: 0 });
+    expect(placed[0].x).toBe(0);
   });
 });
 

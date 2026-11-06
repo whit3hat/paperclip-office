@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { generateOfficeMap } from "../src/layout/generate.js";
 import { scandiPalette } from "../src/layout/styles/scandi.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
-import { fitSceneBox, getFloorAspect, reportFloorSize, resetFloorAspect, subscribeFloorAspect } from "../src/ui/sceneFit.js";
+import { fitSceneBox, getFloorAspect, getFloorPixelSize, reportFloorSize, resetFloorAspect, subscribeFloorAspect } from "../src/ui/sceneFit.js";
+import { getSceneTileSize, getSeatAssignments, setSeatSceneMap } from "../src/ui/seatMap.js";
+import { packLabels, type LabelBox } from "../src/ui/labelLayout.js";
 
 // The floor is only as wide as the company makes it: a one-room company on the compact preset is
 // 17x24 tiles (aspect 0.71) and six departments is 68x29 (aspect 2.35). The page used to hand both
@@ -79,11 +81,59 @@ describe("fitSceneBox", () => {
   });
 });
 
+// HAV-90, the other side of the same coin: the fit leaves no dead band, so it leaves no slack for a
+// plate to hang in either. The map rect is the clip rect, and the label layer has to clamp into it.
+describe("plates against the fitted floor", () => {
+  const AGENTS = [
+    { id: "ceo", isChief: true },
+    { id: "eng-lead", isChief: false },
+    { id: "eng-1", isChief: false },
+  ];
+  /** The three-agent company the acceptance shot uses (`?team=small`). */
+  const SMALL = depts([1, 2]);
+
+  for (const { id, spec } of LAYOUT_PRESETS)
+    it(`${id}: a plate on the outer-wall desk is pulled inside the floor, not shaved by it`, () => {
+      const office = generateOfficeMap(SMALL, scandiPalette(), spec);
+      const map = office.map as unknown as { width: number; height: number; tilewidth: number };
+      setSeatSceneMap(office.map, office.seatNames);
+      const ts = getSceneTileSize();
+      const mapPx = { w: map.width * ts, h: map.height * ts };
+      const box = fitSceneBox({ available: PAGE, aspect: mapPx.w / mapPx.h, gutter: GUTTER, minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT });
+      const zoom = Math.min((box.width - GUTTER) / mapPx.w, box.height / mapPx.h);
+
+      // The desk closest to the left wall, and how much canvas there is beside it at that zoom.
+      const desks = [...getSeatAssignments(AGENTS).values()];
+      expect(desks.length).toBe(AGENTS.length);
+      const slack = Math.min(...desks.map((t) => (t.x * ts + ts / 2) * zoom));
+      // A plate wider than its desk has room for: centred on the agent, its left edge is off-map.
+      const w = slack * 2 + 20;
+      const plate: LabelBox = { id: "wall-desk", x: slack - w / 2, y: 40, w, h: 10, rank: 0 };
+      expect(plate.x).toBeLessThan(0);
+
+      const bounds = { x: 0, y: 0, w: mapPx.w * zoom, h: mapPx.h * zoom };
+      const { slots, placed } = packLabels([plate], 13, 1, [], bounds);
+      expect(slots.get("wall-desk")?.visible).toBe(true);
+      expect(slots.get("wall-desk")?.dx).toBe(-plate.x);
+      expect(placed[0].x).toBe(0);
+      expect(placed[0].x + placed[0].w).toBeLessThanOrEqual(bounds.w);
+    });
+});
+
 describe("floor aspect reporting", () => {
   beforeEach(resetFloorAspect);
 
   it("is null until a floor mounts, so the page keeps its unfitted box", () => {
     expect(getFloorAspect()).toBeNull();
+  });
+
+  it("hands the label layer the map rect it has to stay inside", () => {
+    expect(getFloorPixelSize()).toBeNull();
+    reportFloorSize(528, 400);
+    expect(getFloorPixelSize()).toEqual({ width: 528, height: 400 });
+    // Same aspect, bigger floor: the rect still has to follow, or the clamp uses the old one.
+    reportFloorSize(1056, 800);
+    expect(getFloorPixelSize()).toEqual({ width: 1056, height: 800 });
   });
 
   it("tells the page when the map changes size, and only then", () => {
