@@ -36,6 +36,12 @@ Type: the host font stack. Monospace only for SHA and branch names.
 
 Graph rows are 26 px in the default preset. Refs render as outline chips before the subject; the owner chip sits after it. The graph column is sized from the layout's widest lane and capped at 40 percent of the table, with a slider when it overflows. Pages of 120 commits load as the user scrolls.
 
+## Canvas and page frame
+
+The canvas is sized to the floor, never the floor to the canvas. The generated floor's aspect is a function of the company — about 0.7 for one department on the compact preset, about 2.3 for six — and upstream's camera fits with `min(view/map)` and centres, so any box that is not the floor's own shape keeps the leftover as dead canvas. The page takes the built map's size (`Camera.setMapSize` → `src/ui/sceneFit.ts`) and gives the box that aspect, capped at `min(68vh, 720px)` and never under 320 px. A floor narrower than the page gives the width back and centres, so the spare room is page background beside the office frame rather than empty canvas inside it. Fitting is the initial state and the resize behaviour, not a clamp: the wheel and the zoom buttons still go where the viewer sends them.
+
+Below the canvas the page has two levels and not a stack of equals. One primary panel — Activity, open by default, because it is the one that moves — then a single strip of secondary pills for the reference tables, one open at a time. Every panel header carries a count, and a count that means trouble is `--destructive` *and* says what it is ("2 stuck"), so finding the problem never depends on separating two hues.
+
 ## Presets (config `theme`)
 
 | Preset | Row | Chips | Lane colour | Dots |

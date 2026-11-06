@@ -4,9 +4,9 @@ import { scandiPalette } from "../src/layout/styles/scandi.js";
 import { LAYOUT_PRESETS } from "../src/layout/presets.js";
 import { fitSceneBox, getFloorAspect, reportFloorSize, resetFloorAspect, subscribeFloorAspect } from "../src/ui/sceneFit.js";
 
-// The floor is only as wide as the company makes it: three agents on the compact preset is 17x24
-// tiles (aspect 0.71) and six departments is 66x29 (aspect 2.28). The page used to hand both the
-// same ~1.7 box, so one letterboxed top and bottom and the other left and right. No browser is
+// The floor is only as wide as the company makes it: a one-room company on the compact preset is
+// 17x24 tiles (aspect 0.71) and six departments is 68x29 (aspect 2.35). The page used to hand both
+// the same ~1.7 box, so one letterboxed left and right and the other top and bottom. No browser is
 // needed to prove the fit — the generator is deterministic, so the real map sizes come from it.
 
 const PAGE = 1248; // the content column at the 1440x900 the screenshot harness shoots

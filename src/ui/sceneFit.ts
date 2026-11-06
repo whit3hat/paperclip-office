@@ -3,10 +3,11 @@
 //
 // Upstream's Camera fits with min(view/map) and centres, so whatever the shorter axis does not use
 // stays as dead canvas. The generated floor's aspect is a function of the company — about 0.7 for a
-// one-room team on the compact preset, about 2.3 for five departments side by side — while the page
-// handed the scene a fixed ~1.7 box. There was always a band, and at the extremes it was most of the
-// canvas. Give the box the floor's own aspect and both axes bind at once, so fit-to-screen has
-// nothing left to letterbox.
+// one-room team on the compact preset, about 2.3 for six departments side by side — while the page
+// handed every one of them the same ~1.7 box. There was always a band, and at the extremes it cost
+// 40% of the canvas.
+// Give the box the floor's own aspect and both axes bind at once, so fit-to-screen has nothing left
+// to letterbox.
 //
 // The floor reports its size rather than the page recomputing it: Camera.setMapSize carries the map
 // that was actually built, so this holds for the generated floor, the fixed upstream map and any
