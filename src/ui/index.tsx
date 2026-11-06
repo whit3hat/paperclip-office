@@ -18,7 +18,7 @@ import { OfficeScene } from "./OfficeScene.js";
 import { ROSTER_WIDTH, RosterSidebar } from "./RosterSidebar.js";
 import { SceneControls } from "./SceneControls.js";
 import { OrgPanel } from "./OrgPanel.js";
-import { DetailTabs, type DetailTab, type PanelBadge } from "./Panels.js";
+import { DetailStrip, type DetailPanel, type PanelBadge } from "./Panels.js";
 import { fitSceneBox, getFloorAspect, subscribeFloorAspect } from "./sceneFit.js";
 import { WallOfFame } from "./WallOfFame.js";
 import { tokens } from "./tokens.js";
@@ -354,7 +354,7 @@ export function OfficePage({ context }: PluginPageProps) {
     : overBudget
       ? [{ text: `${overBudget} over budget`, tone: "alert" }]
       : [{ text: `${agents.length} agents` }];
-  const tabs: DetailTab[] = data
+  const detailPanels: DetailPanel[] = data
     ? [
         ...((data.settings.scoreboard ?? true) && scored > 0
           ? [{
@@ -424,7 +424,7 @@ export function OfficePage({ context }: PluginPageProps) {
         <ActivityFeed companyId={companyId} windowHours={data.settings.activityWindowHours} limit={data.settings.activityLimit} />
       )}
       {/* Mounted only once the roster exists: the strip picks its first open tab from the badges. */}
-      {data && <DetailTabs tabs={tabs} />}
+      {data && <DetailStrip panels={detailPanels} />}
     </div>
   );
 }

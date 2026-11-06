@@ -113,7 +113,9 @@ export function PrimaryPanel({
   );
 }
 
-export interface DetailTab {
+const PANEL_ID = "office-detail-panel";
+
+export interface DetailPanel {
   id: string;
   title: string;
   badges?: PanelBadge[];
@@ -121,16 +123,16 @@ export interface DetailTab {
   body: () => ReactNode;
 }
 
-/** The reference tables, one strip, one open at a time. Nothing that was reachable stops being
+/** The reference tables behind one strip, one open at a time. Nothing that was reachable stops being
  *  reachable; it stops being four full-width bars shouting at the same volume. */
-export function DetailTabs({ tabs }: { tabs: DetailTab[] }) {
+export function DetailStrip({ panels }: { panels: DetailPanel[] }) {
   // No remembered choice opens whatever is flagged, so a stuck agent surfaces its table unasked.
   const [active, setActive] = useState<string | null>(() => {
     const stored = readPanel("detail");
-    return stored === null ? tabs.find((t) => t.badges?.some((b) => b.tone === "alert"))?.id ?? null : stored || null;
+    return stored === null ? panels.find((p) => p.badges?.some((b) => b.tone === "alert"))?.id ?? null : stored || null;
   });
-  if (tabs.length === 0) return null;
-  const open = tabs.find((t) => t.id === active);
+  if (panels.length === 0) return null;
+  const open = panels.find((p) => p.id === active);
   const pick = (id: string) => {
     const next = active === id ? null : id;
     setActive(next);
@@ -138,14 +140,16 @@ export function DetailTabs({ tabs }: { tabs: DetailTab[] }) {
   };
   return (
     <section style={panelSurface}>
-      <div role="tablist" style={{ display: "flex", gap: 6, padding: 6, flexWrap: "wrap" }}>
-        {tabs.map((t) => {
+      {/* Disclosure buttons sharing one region, not tabs: a second click closes the open one, which
+          `aria-selected` cannot say. */}
+      <div role="group" aria-label="Reference tables" style={{ display: "flex", gap: 6, padding: 6, flexWrap: "wrap" }}>
+        {panels.map((t) => {
           const on = t.id === active;
           return (
             <button
               key={t.id}
-              role="tab"
-              aria-selected={on}
+              aria-expanded={on}
+              aria-controls={PANEL_ID}
               onClick={() => pick(t.id)}
               style={{
                 display: "flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 999,
@@ -163,7 +167,11 @@ export function DetailTabs({ tabs }: { tabs: DetailTab[] }) {
           );
         })}
       </div>
-      {open && <div style={{ borderTop: `1px solid ${tokens.border}`, overflowX: "auto" }}>{open.body()}</div>}
+      {open && (
+        <div id={PANEL_ID} style={{ borderTop: `1px solid ${tokens.border}`, overflowX: "auto" }}>
+          {open.body()}
+        </div>
+      )}
     </section>
   );
 }
