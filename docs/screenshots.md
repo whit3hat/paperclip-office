@@ -28,6 +28,20 @@ export PUPPETEER=~/.cache/puppeteer-host/node_modules/puppeteer/lib/esm/puppetee
 
 Pointing at `.../node_modules/puppeteer` fails immediately, before the browser is ever launched.
 
+## The set
+
+| Shot | What it has to show |
+| ---- | ------------------- |
+| `office` | The whole floor at the full demo roster. |
+| `office-small` | The same floor for a three-agent company (`?team=small`). The floor's shape is a function of the roster, so one shot cannot prove the canvas fits it — this is the narrow end of the range. |
+| `office-closeup` | Three zoom steps in, for the live layer. |
+| `panels` | The page below the canvas, scrolled to the bottom. |
+| `agent-monitor`, `decisions`, `widget` | The overlays and the dashboard card. |
+
+`panels` sets `noFloorWait`, which skips the walk-in settle: nothing below the canvas depends on
+where the characters are standing, and waiting five minutes for them would be five minutes spent
+on a part of the frame the shot crops out anyway.
+
 ## It is slow, and that is expected
 
 With no GPU, Chrome falls back to SwiftShader and renders the floor in software. Pixi clamps

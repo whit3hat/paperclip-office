@@ -150,6 +150,10 @@ Paperclip Office runs on the office engine from [munder-difflin](https://github.
 <td width="50%"><img src="docs/screenshots/widget.png" alt="Dashboard widget"><br><b>Dashboard widget.</b> Counts, decisions and who is on what.</td>
 <td width="50%"><img src="docs/screenshots/office-closeup.png" alt="Zoomed in"><br><b>Zoomed in.</b> Name and role plates, issue tags, and the PA checking on an idle agent who has work waiting.</td>
 </tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/office-small.png" alt="A three-agent company"><br><b>Three agents.</b> The floor is generated from the org chart, so a small company gets a small office — and the canvas is sized to it rather than the other way round.</td>
+<td width="50%"><img src="docs/screenshots/panels.png" alt="The panels under the canvas"><br><b>Under the canvas.</b> Activity leads; the scoreboard, the chain of command and the state board sit behind one strip, each saying what is in it.</td>
+</tr>
 </table>
 
 ## Install
