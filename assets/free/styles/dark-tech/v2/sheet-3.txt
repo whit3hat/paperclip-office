@@ -1,0 +1,28 @@
+SHEET 3 — café, storage and tech. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+KITCHEN COUNTER RUN (these must join side by side into one continuous counter, 1 tile wide × 2 tall each, same height, same top line, same dark-walnut worktop over matte-black cabinets):
+A1:A2 counter left end. B1:B2 counter plain middle (repeatable). C1:C2 counter with sink and tap. D1:D2 counter with espresso machine. E1:E2 counter with microwave. F1:F2 counter with a fruit bowl. G1:G2 counter with a rack of clean mugs. H1:H2 the same counter with an EMPTY mug rack. I1:I2 counter right end.
+FRIDGE: J1:J2 1×2 tall matte-black fridge with a thin chrome handle.
+VENDING MACHINE: K1:K2 1×2, black cabinet with a cyan-lit window.
+WATER COOLER: L1:L2 1×2, black with a cyan-tinted bottle.
+DISHWASHER: M1:M2 1×2 built-in, black front.
+
+BOOKSHELF: A4:B5 2×2 black steel shelving full of technical manuals and a plant.
+LOW SHELF / CREDENZA: C4:D4 2×1 dark-walnut credenza with a plant and a small speaker on top.
+FILING CABINET: E4:E5 1×2 steel grey.
+PRINTER: F4:G5 2×2 black office printer/copier on a steel stand.
+LOCKERS: H4:I5 2×2 dark steel lockers.
+COAT RACK: J4:J5 1×2 black coat stand with a hoodie on it.
+UMBRELLA STAND: K4 1×1.
+TROPHY CABINET: L4:M5 2×2 glass-front black cabinet with small chrome trophies.
+
+SERVER RACK OFF: A7:A8 1×2 black 19-inch rack with DARK status lights.
+SERVER RACK ON: B7:B8 identical, lights lit (small led-green, cyan and amber dots).
+NETWORK CABINET: C7:C8 1×2 black wall cabinet with a patch panel and short cyan patch leads.
+PA STATION: D7:E8 2×2 small black desk with a clipboard and a tablet, a chair facing UP drawn in front of it as part of the image.
+MAIL CART: F7 1×1.
+DESK STATUS LAMP: G7 1×1, drawn in WHITE / light grey only (the game tints it).
+DESK FLAG: H7 1×1 small flag on a stand, WHITE only (tinted by the game).
+PAPER STACKS on desk: I7 small, J7 medium, K7 tall and messy (1×1 each, transparent around them).
+IN/OUT TRAYS: L7 1×1. RED INBOX TRAY: M7 1×1 (red alert). SERVICE BELL: N7 1×1. NAME PLATE (blank, no text): O7 1×1.
+WELCOME BOX with a balloon: P7:P8 1×2.

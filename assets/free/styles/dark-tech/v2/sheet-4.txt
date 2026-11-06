@@ -1,0 +1,20 @@
+SHEET 4 — wall-mounted items (drawn as seen hanging on the graphite wall face, background magenta), plants and small props. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+WALL ITEMS:
+A1:C2 kanban board: dark glass board with 3 empty columns separated by thin cyan lines, NO notes (the game draws them).
+D1:D1 wall calendar with an empty grid, no numbers.
+E1 round wall clock, black rim, dark face with a thin cyan ring, NO hands (the game draws them).
+F1:G2 "ask me" board, empty dark cork, one red-alert pin.
+H1:I2 wall screen showing a cyan bar chart on a dark field. J1:K2 wall screen showing a rising led-green line and a coin. L1:M2 wall screen showing lines of a list (no readable text).
+N1:P1 wide empty chrome plaque frame (3×1), for a Wall of Fame.
+A4:B5 whiteboard: dark glass board with a few cyan and magenta sticky notes. C4:D5 notice board with pinned papers.
+E4:F5 abstract art print (cyan and magenta shapes on near-black). G4:H5 landscape print (a night mountain ridge under a cyan sky). I4:J5 framed group photo (tiny silhouettes, no faces).
+K4:L4 wall shelf with small plants. M4 wall lamp — a slim cyan LED bar sconce. N4 fire extinguisher. O4 first-aid box. P4 exit sign with a running-figure icon (no text), led-green.
+M5 air vent. N5 security camera. O5 badge reader with a cyan ring. P5 blank department sign plate.
+
+PLANTS (in matte black or dark steel pots):
+A7 small plant 1×1. B7 small succulent 1×1. C7:C8 tall fiddle-leaf fig 1×2. D7:D8 tall monstera 1×2. E7:F7 long planter box with herbs 2×1. G7:H7 low hedge planter 2×1. I7:I8 hanging plant 1×2 (hangs from the top of its rectangle).
+
+SMALL PROPS (1×1, transparent around them):
+A10 bin. B10 recycling bin. C10 cardboard box. D10:E10 two stacked moving boxes 2×1. F10 floor lamp — a black tripod with a cyan uplight (1×1 base, the shade can reach the top of the cell). G10 vase of flowers. H10 magazine rack. I10 bench seat 1×1 (repeatable end to end). J10 desk plant. K10 chrome trophy. L10 stack of books. M10 laptop closed. N10 mug. O10 headphones. P10 notebook and pen.
+A12:C12 bench 3×1 black steel with a walnut seat, one drawing. D12:D13 game console with TV 1×2. E12:E13 arcade cabinet 1×2 with a cyan-lit screen.

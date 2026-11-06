@@ -1,0 +1,45 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Dark tech: a late-night infrastructure team's office. Near-black matte floors with a faint darker grid, graphite walls with a thin cyan LED strip along the top cap and a dark steel skirting, matte-black desks with slim bright monitors and low-lit keyboards, dark mesh task chairs with coloured accent stitching, black server racks with small green, cyan and amber status lights, cyan-tinted dark glass in slim black frames, a few dark-walnut surfaces for warmth, deep green plants in matte black pots. High contrast: the screens and the LEDs are the light in the room. Light from the top-left but dim. Clean 1-pixel outline on furniture — on dark objects use a LIGHTER steel shade, never black on black, so every object stays readable against the dark floor. Soft 1-step shading only. No glow bleeding into the magenta background.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+floor base #15161A, floor panel #1B1D23, floor grid #22252D,
+dept blue #1D2C44, dept violet #2A2246, dept teal #163238,
+deck #101216, panel #1E2128, steel #2E333C, steel light #3C434F, mist #8A93A3, chrome #C3CBD6, white #EDF1F6,
+cyan #35E0F2, cyan dark #1A8FA8, magenta #E8469B, magenta dark #A42A6C, violet #8A6CFF, violet dark #5A41C4, amber #F0A62E, amber dark #B2731A,
+led green #4BE07A, led green dark #2A8F4C, red alert #F2564E,
+screen off #171A20, screen on #2BB7E8, screen glow #BDEBFA, glass #27424C, glass light #4E7F8C,
+walnut #4A3B2E, leaf #3F8C5B, leaf dark #27603C.
+
+
+SHEET 4 — wall-mounted items (drawn as seen hanging on the graphite wall face, background magenta), plants and small props. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+WALL ITEMS:
+A1:C2 kanban board: dark glass board with 3 empty columns separated by thin cyan lines, NO notes (the game draws them).
+D1:D1 wall calendar with an empty grid, no numbers.
+E1 round wall clock, black rim, dark face with a thin cyan ring, NO hands (the game draws them).
+F1:G2 "ask me" board, empty dark cork, one red-alert pin.
+H1:I2 wall screen showing a cyan bar chart on a dark field. J1:K2 wall screen showing a rising led-green line and a coin. L1:M2 wall screen showing lines of a list (no readable text).
+N1:P1 wide empty chrome plaque frame (3×1), for a Wall of Fame.
+A4:B5 whiteboard: dark glass board with a few cyan and magenta sticky notes. C4:D5 notice board with pinned papers.
+E4:F5 abstract art print (cyan and magenta shapes on near-black). G4:H5 landscape print (a night mountain ridge under a cyan sky). I4:J5 framed group photo (tiny silhouettes, no faces).
+K4:L4 wall shelf with small plants. M4 wall lamp — a slim cyan LED bar sconce. N4 fire extinguisher. O4 first-aid box. P4 exit sign with a running-figure icon (no text), led-green.
+M5 air vent. N5 security camera. O5 badge reader with a cyan ring. P5 blank department sign plate.
+
+PLANTS (in matte black or dark steel pots):
+A7 small plant 1×1. B7 small succulent 1×1. C7:C8 tall fiddle-leaf fig 1×2. D7:D8 tall monstera 1×2. E7:F7 long planter box with herbs 2×1. G7:H7 low hedge planter 2×1. I7:I8 hanging plant 1×2 (hangs from the top of its rectangle).
+
+SMALL PROPS (1×1, transparent around them):
+A10 bin. B10 recycling bin. C10 cardboard box. D10:E10 two stacked moving boxes 2×1. F10 floor lamp — a black tripod with a cyan uplight (1×1 base, the shade can reach the top of the cell). G10 vase of flowers. H10 magazine rack. I10 bench seat 1×1 (repeatable end to end). J10 desk plant. K10 chrome trophy. L10 stack of books. M10 laptop closed. N10 mug. O10 headphones. P10 notebook and pen.
+A12:C12 bench 3×1 black steel with a walnut seat, one drawing. D12:D13 game console with TV 1×2. E12:E13 arcade cabinet 1×2 with a cyan-lit screen.
+
+
+Highest priority: keep the exact same palette, pixel size and lighting as Sheets 1 to 3. Wall-mounted items are drawn as they hang on the graphite wall face, with magenta around them, no wall background bleeding past the object. The kanban board has NO notes, the clock has NO hands, the plaque and sign plates are EMPTY — the game draws those live. No text, letters or numbers anywhere on the sheet. All unlisted space remains solid #FF00FF.

@@ -1,0 +1,53 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Dark tech: a late-night infrastructure team's office. Near-black matte floors with a faint darker grid, graphite walls with a thin cyan LED strip along the top cap and a dark steel skirting, matte-black desks with slim bright monitors and low-lit keyboards, dark mesh task chairs with coloured accent stitching, black server racks with small green, cyan and amber status lights, cyan-tinted dark glass in slim black frames, a few dark-walnut surfaces for warmth, deep green plants in matte black pots. High contrast: the screens and the LEDs are the light in the room. Light from the top-left but dim. Clean 1-pixel outline on furniture — on dark objects use a LIGHTER steel shade, never black on black, so every object stays readable against the dark floor. Soft 1-step shading only. No glow bleeding into the magenta background.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+floor base #15161A, floor panel #1B1D23, floor grid #22252D,
+dept blue #1D2C44, dept violet #2A2246, dept teal #163238,
+deck #101216, panel #1E2128, steel #2E333C, steel light #3C434F, mist #8A93A3, chrome #C3CBD6, white #EDF1F6,
+cyan #35E0F2, cyan dark #1A8FA8, magenta #E8469B, magenta dark #A42A6C, violet #8A6CFF, violet dark #5A41C4, amber #F0A62E, amber dark #B2731A,
+led green #4BE07A, led green dark #2A8F4C, red alert #F2564E,
+screen off #171A20, screen on #2BB7E8, screen glow #BDEBFA, glass #27424C, glass light #4E7F8C,
+walnut #4A3B2E, leaf #3F8C5B, leaf dark #27603C.
+
+
+SHEET 1 — floors and walls. Draw exactly these rectangles:
+
+FLOORS (each is a SEAMLESS texture: its left edge continues its right edge and its top edge continues its bottom edge; keep contrast LOW — no dark line along tile borders. Any grid or panel pattern must repeat on an 8 or 16 art-pixel period so it stays seamless):
+A1:D4 main floor: near-black matte floor (floor base) with a faint floor-grid line every 8 art pixels, very low contrast.
+E1:H4 corridor floor: graphite access-floor panels (floor panel) with faint lighter seams every 16 art pixels.
+I1:L4 café floor: dark slate terrazzo (panel) with tiny cyan and mist flecks.
+M1:P4 boardroom floor: charcoal low-pile carpet (floor grid), fine even texture, no pattern.
+A5:B6 department accent floor 1: deep blue carpet (dept blue), seamless.
+C5:D6 department accent floor 2: deep violet carpet (dept violet), seamless.
+E5:F6 department accent floor 3: dark teal carpet (dept teal), seamless.
+G5:H6 department accent floor 4: graphite carpet (floor grid, one step lighter than M1), seamless.
+
+RUG (9-slice, one drawing): I5:K7 a 3×3-tile rectangular rug in steel grey with a thin cyan border; the corners, edges and centre must be separable so the rug can be stretched.
+DOOR MAT: L5:M5 a 2×1 dark steel-framed door mat, deck-black centre with a thin cyan edge.
+
+WALLS — draw ONE continuous graphite wall seen from the front, 3 tiles tall: row 1 of the wall = a thin top cap in steel with a 1-pixel cyan LED line along it, row 2 = plain graphite wall face (panel), row 3 = dark steel skirting at the bottom.
+A8:P10 one continuous straight wall, 16 tiles wide × 3 tall, perfectly repeating every tile horizontally (no frames, no seams, no vertical lines between tiles).
+A11:C13 outer corner, wall turning DOWN on the left (the wall continues downward as a thin 1-tile-wide vertical wall seen from above).
+D11:F13 outer corner, wall turning DOWN on the right.
+G11:G14 vertical wall seen from above: 1 tile wide, 4 tall, continuous, steel top with a thin cyan edge line, repeats vertically.
+H11:I13 doorway: a 2-tile-wide opening in the 3-tall wall with a dark steel door frame; the floor shows through (leave the floor area magenta).
+J11:K13 the same doorway with a closed matte-black door, thin cyan handle plate.
+L11:M13 the same doorway with a cyan-tinted glass door, dark steel frame.
+N11:O13 a large window in the wall: 2 tiles wide in the wall face, dark steel frame, night city outside — deep navy sky with tiny warm and cyan window lights.
+P11:P13 wall end cap (where a straight wall stops), 1 wide × 3 tall.
+
+GLASS PARTITION: A15:D15 a 4×1 low cyan-tinted glass partition with a slim dark steel frame and steel base, repeats horizontally.
+LOW DIVIDER: E15:G15 a 3×1 low acoustic felt divider panel, dark steel grey, on black feet.
+
+
+Highest priority: exact rectangle placement on the invisible 16x16 grid. A8:P10 is ONE unbroken wall strip across the full width of the canvas, no vertical divisions. Floor swatches fill their rectangles completely without frames, and every floor pattern repeats on an 8 or 16 pixel period so two copies side by side show no seam. All unlisted space remains solid #FF00FF. Do not adapt this to an 8x8 icon sheet.

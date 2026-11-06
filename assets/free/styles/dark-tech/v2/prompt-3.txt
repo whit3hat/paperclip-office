@@ -1,0 +1,53 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Dark tech: a late-night infrastructure team's office. Near-black matte floors with a faint darker grid, graphite walls with a thin cyan LED strip along the top cap and a dark steel skirting, matte-black desks with slim bright monitors and low-lit keyboards, dark mesh task chairs with coloured accent stitching, black server racks with small green, cyan and amber status lights, cyan-tinted dark glass in slim black frames, a few dark-walnut surfaces for warmth, deep green plants in matte black pots. High contrast: the screens and the LEDs are the light in the room. Light from the top-left but dim. Clean 1-pixel outline on furniture — on dark objects use a LIGHTER steel shade, never black on black, so every object stays readable against the dark floor. Soft 1-step shading only. No glow bleeding into the magenta background.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+floor base #15161A, floor panel #1B1D23, floor grid #22252D,
+dept blue #1D2C44, dept violet #2A2246, dept teal #163238,
+deck #101216, panel #1E2128, steel #2E333C, steel light #3C434F, mist #8A93A3, chrome #C3CBD6, white #EDF1F6,
+cyan #35E0F2, cyan dark #1A8FA8, magenta #E8469B, magenta dark #A42A6C, violet #8A6CFF, violet dark #5A41C4, amber #F0A62E, amber dark #B2731A,
+led green #4BE07A, led green dark #2A8F4C, red alert #F2564E,
+screen off #171A20, screen on #2BB7E8, screen glow #BDEBFA, glass #27424C, glass light #4E7F8C,
+walnut #4A3B2E, leaf #3F8C5B, leaf dark #27603C.
+
+
+SHEET 3 — café, storage and tech. Same grid, style, palette and scale. Draw exactly these rectangles:
+
+KITCHEN COUNTER RUN (these must join side by side into one continuous counter, 1 tile wide × 2 tall each, same height, same top line, same dark-walnut worktop over matte-black cabinets):
+A1:A2 counter left end. B1:B2 counter plain middle (repeatable). C1:C2 counter with sink and tap. D1:D2 counter with espresso machine. E1:E2 counter with microwave. F1:F2 counter with a fruit bowl. G1:G2 counter with a rack of clean mugs. H1:H2 the same counter with an EMPTY mug rack. I1:I2 counter right end.
+FRIDGE: J1:J2 1×2 tall matte-black fridge with a thin chrome handle.
+VENDING MACHINE: K1:K2 1×2, black cabinet with a cyan-lit window.
+WATER COOLER: L1:L2 1×2, black with a cyan-tinted bottle.
+DISHWASHER: M1:M2 1×2 built-in, black front.
+
+BOOKSHELF: A4:B5 2×2 black steel shelving full of technical manuals and a plant.
+LOW SHELF / CREDENZA: C4:D4 2×1 dark-walnut credenza with a plant and a small speaker on top.
+FILING CABINET: E4:E5 1×2 steel grey.
+PRINTER: F4:G5 2×2 black office printer/copier on a steel stand.
+LOCKERS: H4:I5 2×2 dark steel lockers.
+COAT RACK: J4:J5 1×2 black coat stand with a hoodie on it.
+UMBRELLA STAND: K4 1×1.
+TROPHY CABINET: L4:M5 2×2 glass-front black cabinet with small chrome trophies.
+
+SERVER RACK OFF: A7:A8 1×2 black 19-inch rack with DARK status lights.
+SERVER RACK ON: B7:B8 identical, lights lit (small led-green, cyan and amber dots).
+NETWORK CABINET: C7:C8 1×2 black wall cabinet with a patch panel and short cyan patch leads.
+PA STATION: D7:E8 2×2 small black desk with a clipboard and a tablet, a chair facing UP drawn in front of it as part of the image.
+MAIL CART: F7 1×1.
+DESK STATUS LAMP: G7 1×1, drawn in WHITE / light grey only (the game tints it).
+DESK FLAG: H7 1×1 small flag on a stand, WHITE only (tinted by the game).
+PAPER STACKS on desk: I7 small, J7 medium, K7 tall and messy (1×1 each, transparent around them).
+IN/OUT TRAYS: L7 1×1. RED INBOX TRAY: M7 1×1 (red alert). SERVICE BELL: N7 1×1. NAME PLATE (blank, no text): O7 1×1.
+WELCOME BOX with a balloon: P7:P8 1×2.
+
+
+Highest priority: keep the exact same palette, pixel size and lighting as Sheets 1 and 2. The nine counter modules A1:A2 through I1:I2 must join into one unbroken counter run: same worktop height, same top line, same front face, so B1:B2 can repeat any number of times between the ends. The server rack OFF / ON pair must be identical apart from the status lights. The desk status lamp (G7) and desk flag (H7) are drawn in WHITE and light grey ONLY — the game tints them. All unlisted space remains solid #FF00FF.

@@ -1,0 +1,20 @@
+You are making a game tileset sheet for a top-down pixel-art office (the same camera as classic top-down RPGs: floors seen from directly above, walls and furniture shown with their front face visible, like a 3/4 view).
+
+GRID — follow exactly:
+- Canvas exactly 1024 × 1024 px, 16 columns (A–P) × 16 rows (1–16) of 64 × 64 px cells.
+- Each cell is ONE 16 × 16 px game tile drawn at 4× scale: every art pixel is a crisp 4×4 block. No anti-aliasing, no gradients inside a pixel, no blur, no painterly shading.
+- Objects occupy the exact rectangle of cells I give. A multi-cell object is ONE continuous drawing across its cells (do not draw separate small objects per cell). It fills its rectangle to the edges it stands on, with no empty margin.
+- Everything I do not list is flat pure magenta #FF00FF. No text, no letters, no numbers, no logos, no watermark, no border around the sheet.
+
+SCALE: characters in this game are 16 × 32 px chibi office workers (1 tile wide, 2 tiles tall). A desk is 3 tiles wide, an office chair 1 tile, a door 2 tiles wide, a wall 3 tiles tall.
+
+STYLE — Dark tech: a late-night infrastructure team's office. Near-black matte floors with a faint darker grid, graphite walls with a thin cyan LED strip along the top cap and a dark steel skirting, matte-black desks with slim bright monitors and low-lit keyboards, dark mesh task chairs with coloured accent stitching, black server racks with small green, cyan and amber status lights, cyan-tinted dark glass in slim black frames, a few dark-walnut surfaces for warmth, deep green plants in matte black pots. High contrast: the screens and the LEDs are the light in the room. Light from the top-left but dim. Clean 1-pixel outline on furniture — on dark objects use a LIGHTER steel shade, never black on black, so every object stays readable against the dark floor. Soft 1-step shading only. No glow bleeding into the magenta background.
+
+PALETTE — use ONLY these colours (plus #FF00FF background):
+floor base #15161A, floor panel #1B1D23, floor grid #22252D,
+dept blue #1D2C44, dept violet #2A2246, dept teal #163238,
+deck #101216, panel #1E2128, steel #2E333C, steel light #3C434F, mist #8A93A3, chrome #C3CBD6, white #EDF1F6,
+cyan #35E0F2, cyan dark #1A8FA8, magenta #E8469B, magenta dark #A42A6C, violet #8A6CFF, violet dark #5A41C4, amber #F0A62E, amber dark #B2731A,
+led green #4BE07A, led green dark #2A8F4C, red alert #F2564E,
+screen off #171A20, screen on #2BB7E8, screen glow #BDEBFA, glass #27424C, glass light #4E7F8C,
+walnut #4A3B2E, leaf #3F8C5B, leaf dark #27603C.

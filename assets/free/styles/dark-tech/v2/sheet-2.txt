@@ -1,0 +1,26 @@
+SHEET 2 — furniture. Same grid, style, palette and scale as Sheet 1. Draw exactly these rectangles:
+
+WORKSTATION, monitor OFF: A1:C2 one matte-black desk with a slim steel frame, 3 tiles wide × 2 tall, seen from the front-top. On it: one slim monitor centred on the back half of the desk, screen facing the viewer, screen DARK (screen off), a low-profile keyboard in front of it, a small plant in a black pot on the left, a mug on the right.
+WORKSTATION, monitor ON: D1:F2 EXACTLY the same drawing pixel for pixel, except the screen is glowing (screen on with a few lighter lines of screen glow).
+WORKSTATION 2 OFF / ON: G1:I2 and J1:L2 the same pair as above but with an open laptop instead of a monitor and a stack of papers instead of the plant (again identical except the laptop screen).
+TASK CHAIRS, 1×1 each, dark mesh back with a coloured accent stitch, black five-star base, seen from above/behind as a person would sit at a desk above it:
+M1 chair facing UP (we see its back), cyan stitch. N1 facing UP, magenta stitch. O1 facing UP, violet stitch. P1 facing UP, amber stitch.
+M2 chair facing DOWN (we see the seat front), cyan stitch. N2 facing LEFT, cyan stitch. O2 facing RIGHT, cyan stitch. P2 stool, black with a walnut seat.
+
+EXECUTIVE DESK OFF / ON: A4:D5 and E4:H5 a larger dark-walnut-topped desk on a black frame, 4×2, with a monitor and a slim black task lamp; identical except the screen is off / on.
+EXECUTIVE CHAIR: I4 1×1 higher-backed chair facing UP, black leather with chrome trim.
+
+MEETING TABLE: A7:E8 one long dark-walnut table 5 tiles wide × 2 tall on a black base, with a small cable grommet and a plant in the middle, no chairs on it.
+MEETING CHAIRS: F7 facing DOWN, G7 facing UP, H7 facing DOWN, I7 facing UP (all 1×1, black shell chairs on steel legs).
+ROUND CAFÉ TABLE: J7:K8 2×2 round table, black top on a steel pedestal, with two cups.
+BAR STOOLS: L7 and M7 1×1 each, black seat on a steel post.
+
+SOFA: A10:C11 a 3×2 three-seat sofa, dark charcoal fabric with cyan and magenta cushions, front facing the viewer.
+ARMCHAIR: D10:D11 a 1×2 steel-grey armchair facing the viewer.
+COFFEE TABLE: E10:F11 a 2×2 low oval black coffee table with a laptop and a small plant.
+BEAN BAGS: G10 cyan-grey, H10 magenta-grey (1×1 each).
+FLOOR CUSHIONS: G11 violet, H11 amber.
+RECEPTION DESK: I10:L11 a 4×2 curved black reception counter with a dark-walnut top, a thin cyan LED line along its front, a small monitor and a plant.
+STANDING DESK: M10:O11 a 3×2 black standing desk at full height with a monitor (screen on).
+PING-PONG TABLE: A13:D14 a 4×2 table, dark steel top with thin cyan lines, net across the middle.
+FOOSBALL: E13:G14 a 3×2 foosball table, matte black with chrome rods.
